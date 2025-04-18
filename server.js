@@ -8,8 +8,23 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 901;
 
-// Enable CORS for all routes
-app.use(cors());
+// Configure CORS
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests from specific origins or if no origin (like server-to-server or REST tools)
+    const allowedOrigins = ['https://records.suify.com', 'http://localhost:901']; // Add other local dev ports if needed
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost:')) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  methods: "GET,POST", // Allow common methods
+  credentials: true // Allow cookies if needed in the future
+};
+
+app.use(cors(corsOptions));
 
 // Parse JSON request bodies
 app.use(bodyParser.json());
