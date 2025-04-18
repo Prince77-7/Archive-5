@@ -549,26 +549,62 @@ document.addEventListener("DOMContentLoaded", function() {
             function displayRegisterData(data) {
                 // Clear existing sales data to prevent duplicates
                 salesData.innerHTML = '';
-                
+
+                // Populate Basic Info tab fields from data.content if available
+                if (data && data.content) {
+                    const content = data.content;
+                    document.getElementById("parcel-acres").textContent = content.ACRES || "N/A";
+                    document.getElementById("parcel-sqft").textContent = content.CALC_SQFT || "N/A";
+                    document.getElementById("trustee-id").textContent = content.TRUSTEE_ID || "N/A";
+                    document.getElementById("subdivision").textContent = content.SUBDIV || "N/A";
+                    document.getElementById("sub-lot").textContent = content.SUBLOT || "N/A";
+                    
+                    // Valuation
+                    document.getElementById("current-land-value").textContent = content.CURR_LAND || "N/A";
+                    document.getElementById("current-bldg-value").textContent = content.CURR_BLDG || "N/A";
+                    document.getElementById("current-total-value").textContent = content.CURR_TOTAL || "N/A";
+                    document.getElementById("current-assessed-value").textContent = content.CURR_ASSESS || "N/A";
+                    
+                    // Assessment Info extras
+                    document.getElementById("land-use-desc").textContent = content.LAND_USE || "N/A"; 
+                    document.getElementById("jurisdiction").textContent = content.MUNI_JUR || "N/A";
+                    
+                    // Building Characteristics
+                    document.getElementById("year-built").textContent = content.YRBLT || "N/A";
+                    document.getElementById("stories").textContent = content.STORIES || "N/A";
+                    document.getElementById("ext-wall").textContent = content.EXTWALL_WD || "N/A";
+                    document.getElementById("total-rooms").textContent = content.RMTOT || "N/A";
+                    document.getElementById("bedrooms").textContent = content.RMBED || "N/A";
+                    document.getElementById("full-baths").textContent = content.FIXBATH || "N/A";
+                    document.getElementById("half-baths").textContent = content.FIXHALF || "N/A";
+                    document.getElementById("basement-type").textContent = content.BASEMENT_TYPE || "N/A";
+                    document.getElementById("heating").textContent = content.HEAT_WORD || "N/A";
+                    document.getElementById("parking-type").textContent = content.PARK_TYPE || "N/A";
+                }
+
+                // Populate Sales History tab and Last Sale Price
                 if (data && data.sales && data.sales.length > 0) {
                     // Show the sales table and hide the 'no data' message
                     noSalesData.classList.add("hidden");
+
+                    // Populate Last Sale Price on Basic Info tab
+                    document.getElementById("last-sale-price").textContent = data.sales[0].PRICE || "N/A";
                     
                     // The API already returns sales sorted by date (most recent first)
                     data.sales.forEach((sale, index) => {
                         const row = document.createElement("tr");
-                        
+
                         // For the most recent sale (index 0), add the class
                         if (index === 0) {
                             row.className = "newest-transaction";
                         }
-                        
+
                         // Format sale date
                         let saleDate = sale.SALEDATE || "N/A";
-                        
+
                         // Price is already formatted like "$70,000"
                         let price = sale.PRICE || "N/A";
-                        
+
                         // Instrument type
                         let instrumentType = sale.INSTRTYP || "N/A";
                         // Create a lookup for instrument types
@@ -583,16 +619,16 @@ document.addEventListener("DOMContentLoaded", function() {
                         if (instrTypes[instrumentType]) {
                             instrumentType = `${instrumentType} - ${instrTypes[instrumentType]}`;
                         }
-                        
+
                         // Get document link using the URL directly from the API
                         let documentLink = "N/A";
                         if (sale.URL && sale.URL.trim() !== "") {
                             documentLink = `<a href="${sale.URL.trim()}" target="_blank" title="View Document #${sale.TRANSNO}">View</a>`;
                         }
-                        
+
                         // Book page info is not provided in this API response
                         let bookPage = "N/A";
-                        
+
                         // Build row HTML
                         row.innerHTML = `
                             <td>${saleDate}</td>
@@ -601,10 +637,10 @@ document.addEventListener("DOMContentLoaded", function() {
                             <td>${instrumentType}</td>
                             <td>${documentLink}</td>
                         `;
-                        
+
                         salesData.appendChild(row);
                     });
-                    
+
                     // Update notice to indicate we have current data
                     if (dataNotice) {
                         dataNotice.innerHTML = `<i class="icon-info"></i> Showing the latest property documents directly from the Register of Deeds database.`;
@@ -613,6 +649,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 } else {
                     noSalesData.classList.remove("hidden");
+                     // If no sales data, clear the last sale price field
+                    document.getElementById("last-sale-price").textContent = "N/A";
                 }
             }
             
@@ -1657,537 +1695,6 @@ function loadSavedDatasets() {
             }
         }
 
-        // Function to add a numbered marker to the map
-        function addNumberedMarker(location, number, attributes = null) {
-            if (!location) return; // Don't add marker if location is null
-            const markerSymbol = {
-                type: "simple-marker",
-                color: [226, 119, 40], // Orange
-                outline: {
-                    color: [255, 255, 255], // White
-                    width: 1
-                }
-            };
-            
-            const textSymbol = {
-                type: "text",
-                color: "white",
-                haloColor: "black",
-                haloSize: "1px",
-                text: number.toString(),
-                xoffset: 0,
-                yoffset: -4, // Adjust offset slightly if needed
-                font: { // Define font properties
-                    size: 10,
-                    weight: "bold"
-                }
-            };
-
-            const pointGraphic = new Graphic({
-                geometry: location,
-                symbol: markerSymbol,
-                attributes: attributes || {} // Add attributes if provided
-            });
-
-            const textGraphic = new Graphic({
-                geometry: location,
-                symbol: textSymbol,
-                attributes: attributes || {} // Add attributes if provided
-            });
-
-            csvUploadGraphicsLayer.addMany([pointGraphic, textGraphic]);
-            return [pointGraphic, textGraphic]; // Return graphics for potential interaction
-        }
-
-        // Function to display results from the uploaded file
-        function displayProcessedResults(results) {
-            uploadPropertyListContainer.innerHTML = ''; // Clear spinner/previous content
-            csvUploadGraphicsLayer.removeAll(); // Clear existing graphics before adding new ones
-            highlightGraphicsLayer.removeAll(); // Clear previous highlights
-            
-            // Hide download button initially
-            if (downloadResultsCsvButton) downloadResultsCsvButton.classList.add('hidden');
-
-            if (!results || results.length === 0) {
-                 uploadPropertyListContainer.textContent = 'No results to display.';
-                 return;
-            }
-            
-            const listElement = document.createElement('div');
-            listElement.className = 'property-list'; // Use existing class for styling
-            
-            let successfulResults = []; // To store geometries/points for extent calculation
-            let extent = null; // To calculate extent
-
-            results.forEach(result => {
-                const listItem = document.createElement('div');
-                listItem.className = 'property-list-item';
-                
-                const numberSpan = document.createElement('span');
-                numberSpan.className = 'property-list-number'; // Style like owner search
-                numberSpan.textContent = result.index;
-                
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = 'property-list-details';
-                
-                const addressSpan = document.createElement('div');
-                addressSpan.className = 'property-list-address';
-                addressSpan.textContent = result.originalAddress || 'N/A';
-                
-                const statusSpan = document.createElement('div');
-                statusSpan.className = 'property-list-parcel-id'; // Reuse style
-                statusSpan.style.fontSize = '0.8em'; // Smaller status text
-                
-                detailsDiv.appendChild(addressSpan);
-
-                if (result.status === 'Success') {
-                    statusSpan.textContent = `Parcel: ${result.parcelAttributes.PARID || 'N/A'}`; // Show Parcel ID
-                    listItem.classList.add('success'); // Optional: Add class for styling success
-                    
-                    // Add marker to map (check if mapPoint exists)
-                    if (result.mapPoint) {
-                        addNumberedMarker(result.mapPoint, result.index, result.parcelAttributes);
-                        successfulResults.push(result.mapPoint); // Add point for extent
-                    }
-
-                    // Make list item clickable
-                    listItem.style.cursor = 'pointer';
-                    listItem.addEventListener('click', () => {
-                        if (result.mapPoint) view.goTo({ target: result.mapPoint, zoom: 18 }); // Zoom to the point
-                        // Optionally highlight the parcel polygon if needed
-                        highlightProperty(result.parcelGeometry); 
-                        // Optionally display full info (might be too much for upload list)
-                        // displayParcelInfo(result.parcelAttributes, result.parcelGeometry); 
-                    });
-                } else if (result.status === 'Multiple Parcels Found') {
-                    statusSpan.textContent = `Parcel: ${result.parcelAttributes.PARID || 'N/A'} (Multiple Found)`; 
-                    listItem.classList.add('warning'); // Style for multiple
-                    // Add marker to map (check if mapPoint exists)
-                    if (result.mapPoint) {
-                         addNumberedMarker(result.mapPoint, result.index, result.parcelAttributes);
-                         successfulResults.push(result.mapPoint); // Add point for extent
-                    }
-                     listItem.style.cursor = 'pointer';
-                    listItem.addEventListener('click', () => {
-                        if (result.mapPoint) view.goTo({ target: result.mapPoint, zoom: 18 }); 
-                        if (result.parcelGeometry) highlightProperty(result.parcelGeometry); 
-                    });
-                } else {
-                    statusSpan.textContent = `Status: ${result.status}`;
-                    listItem.classList.add('failed'); // Optional: Add class for styling failures
-                    numberSpan.style.backgroundColor = '#888'; // Grey out number for failures
-                }
-                
-                detailsDiv.appendChild(statusSpan);
-                listItem.appendChild(numberSpan);
-                listItem.appendChild(detailsDiv);
-                listElement.appendChild(listItem);
-            });
-
-            uploadPropertyListContainer.appendChild(listElement);
-
-            // Make the toggle button visible now that there are results
-            if (results && results.length > 0) {
-                toggleProcessedListButton.style.display = 'block';
-                toggleProcessedListButton.textContent = 'Hide Processed Addresses'; // Reset text
-                uploadPropertyListContainer.style.display = 'block'; // Ensure list is visible initially
-            } else {
-                toggleProcessedListButton.style.display = 'none'; // Hide if no results
-            }
-
-            // Show download button if there are results to download
-            if (processedParcelDataForDownload.length > 0 && downloadResultsCsvButton) {
-                console.log(`displayProcessedResults: Making download button visible. Data length: ${processedParcelDataForDownload.length}`); // Add log
-                downloadResultsCsvButton.classList.remove('hidden');
-            } else {
-                 console.log(`displayProcessedResults: Not showing download button. Data length: ${processedParcelDataForDownload ? processedParcelDataForDownload.length : 'null or undefined'}`); // Add log for the else case too
-            }
-
-            // Zoom to the extent of successful results if any
-            if (successfulResults.length > 0) {
-                // Simple extent calculation (more robust libraries exist, but this is basic)
-                if (successfulResults.length === 1) {
-                    view.goTo({ target: successfulResults[0], zoom: 18 });
-                } else {
-                    // Calculate extent (basic implementation)
-                    let minX = successfulResults[0].longitude, maxX = successfulResults[0].longitude;
-                    let minY = successfulResults[0].latitude, maxY = successfulResults[0].latitude;
-                    successfulResults.forEach(p => {
-                        if (p.longitude < minX) minX = p.longitude;
-                        if (p.longitude > maxX) maxX = p.longitude;
-                        if (p.latitude < minY) minY = p.latitude;
-                        if (p.latitude > maxY) maxY = p.latitude;
-                    });
-                    extent = {
-                        xmin: minX, ymin: minY, xmax: maxX, ymax: maxY,
-                        spatialReference: view.spatialReference
-                    };
-                    view.goTo(extent).catch(error => {
-                        if (error.name != "AbortError") { // Ignore AbortError if user interacts
-                            console.error("Error zooming to extent: ", error);
-                        }
-                    });
-                }
-            } else {
-                // Maybe show a message if no addresses were successful?
-                console.log("No successful results to zoom to.");
-            }
-        }
-
-        // Function to add a numbered marker to the map
-        function addNumberedMarker(location, number, attributes = null) {
-            if (!location) return; // Don't add marker if location is null
-            const markerSymbol = {
-                type: "simple-marker",
-                color: [226, 119, 40], // Orange
-                outline: {
-                    color: [255, 255, 255], // White
-                    width: 1
-                }
-            };
-            
-            const textSymbol = {
-                type: "text",
-                color: "white",
-                haloColor: "black",
-                haloSize: "1px",
-                text: number.toString(),
-                xoffset: 0,
-                yoffset: -4, // Adjust offset slightly if needed
-                font: { // Define font properties
-                    size: 10,
-                    weight: "bold"
-                }
-            };
-
-            const pointGraphic = new Graphic({
-                geometry: location,
-                symbol: markerSymbol,
-                attributes: attributes || {} // Add attributes if provided
-            });
-
-            const textGraphic = new Graphic({
-                geometry: location,
-                symbol: textSymbol,
-                attributes: attributes || {} // Add attributes if provided
-            });
-
-            csvUploadGraphicsLayer.addMany([pointGraphic, textGraphic]);
-            return [pointGraphic, textGraphic]; // Return graphics for potential interaction
-        }
-
-        // Function to display results from the uploaded file
-        function displayProcessedResults(results) {
-            uploadPropertyListContainer.innerHTML = ''; // Clear spinner/previous content
-            csvUploadGraphicsLayer.removeAll(); // Clear existing graphics before adding new ones
-            highlightGraphicsLayer.removeAll(); // Clear previous highlights
-            
-            // Hide download button initially
-            if (downloadResultsCsvButton) downloadResultsCsvButton.classList.add('hidden');
-
-            if (!results || results.length === 0) {
-                 uploadPropertyListContainer.textContent = 'No results to display.';
-                 return;
-            }
-            
-            const listElement = document.createElement('div');
-            listElement.className = 'property-list'; // Use existing class for styling
-            
-            let successfulResults = []; // To store geometries/points for extent calculation
-            let extent = null; // To calculate extent
-
-            results.forEach(result => {
-                const listItem = document.createElement('div');
-                listItem.className = 'property-list-item';
-                
-                const numberSpan = document.createElement('span');
-                numberSpan.className = 'property-list-number'; // Style like owner search
-                numberSpan.textContent = result.index;
-                
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = 'property-list-details';
-                
-                const addressSpan = document.createElement('div');
-                addressSpan.className = 'property-list-address';
-                addressSpan.textContent = result.originalAddress || 'N/A';
-                
-                const statusSpan = document.createElement('div');
-                statusSpan.className = 'property-list-parcel-id'; // Reuse style
-                statusSpan.style.fontSize = '0.8em'; // Smaller status text
-                
-                detailsDiv.appendChild(addressSpan);
-
-                if (result.status === 'Success') {
-                    statusSpan.textContent = `Parcel: ${result.parcelAttributes.PARID || 'N/A'}`; // Show Parcel ID
-                    listItem.classList.add('success'); // Optional: Add class for styling success
-                    
-                    // Add marker to map (check if mapPoint exists)
-                    if (result.mapPoint) {
-                        addNumberedMarker(result.mapPoint, result.index, result.parcelAttributes);
-                        successfulResults.push(result.mapPoint); // Add point for extent
-                    }
-
-                    // Make list item clickable
-                    listItem.style.cursor = 'pointer';
-                    listItem.addEventListener('click', () => {
-                        if (result.mapPoint) view.goTo({ target: result.mapPoint, zoom: 18 }); // Zoom to the point
-                        // Optionally highlight the parcel polygon if needed
-                        highlightProperty(result.parcelGeometry); 
-                        // Optionally display full info (might be too much for upload list)
-                        // displayParcelInfo(result.parcelAttributes, result.parcelGeometry); 
-                    });
-                } else if (result.status === 'Multiple Parcels Found') {
-                    statusSpan.textContent = `Parcel: ${result.parcelAttributes.PARID || 'N/A'} (Multiple Found)`; 
-                    listItem.classList.add('warning'); // Style for multiple
-                    // Add marker to map (check if mapPoint exists)
-                    if (result.mapPoint) {
-                         addNumberedMarker(result.mapPoint, result.index, result.parcelAttributes);
-                         successfulResults.push(result.mapPoint); // Add point for extent
-                    }
-                     listItem.style.cursor = 'pointer';
-                    listItem.addEventListener('click', () => {
-                        if (result.mapPoint) view.goTo({ target: result.mapPoint, zoom: 18 }); 
-                        if (result.parcelGeometry) highlightProperty(result.parcelGeometry); 
-                    });
-                } else {
-                    statusSpan.textContent = `Status: ${result.status}`;
-                    listItem.classList.add('failed'); // Optional: Add class for styling failures
-                    numberSpan.style.backgroundColor = '#888'; // Grey out number for failures
-                }
-                
-                detailsDiv.appendChild(statusSpan);
-                listItem.appendChild(numberSpan);
-                listItem.appendChild(detailsDiv);
-                listElement.appendChild(listItem);
-            });
-
-            uploadPropertyListContainer.appendChild(listElement);
-
-            // Make the toggle button visible now that there are results
-            if (results && results.length > 0) {
-                toggleProcessedListButton.style.display = 'block';
-                toggleProcessedListButton.textContent = 'Hide Processed Addresses'; // Reset text
-                uploadPropertyListContainer.style.display = 'block'; // Ensure list is visible initially
-            } else {
-                toggleProcessedListButton.style.display = 'none'; // Hide if no results
-            }
-
-            // Show download button if there are results to download
-            if (processedParcelDataForDownload.length > 0 && downloadResultsCsvButton) {
-                console.log(`displayProcessedResults: Making download button visible. Data length: ${processedParcelDataForDownload.length}`); // Add log
-                downloadResultsCsvButton.classList.remove('hidden');
-            } else {
-                 console.log(`displayProcessedResults: Not showing download button. Data length: ${processedParcelDataForDownload ? processedParcelDataForDownload.length : 'null or undefined'}`); // Add log for the else case too
-            }
-
-            // Zoom to the extent of successful results if any
-            if (successfulResults.length > 0) {
-                // Simple extent calculation (more robust libraries exist, but this is basic)
-                if (successfulResults.length === 1) {
-                    view.goTo({ target: successfulResults[0], zoom: 18 });
-                } else {
-                    // Calculate extent (basic implementation)
-                    let minX = successfulResults[0].longitude, maxX = successfulResults[0].longitude;
-                    let minY = successfulResults[0].latitude, maxY = successfulResults[0].latitude;
-                    successfulResults.forEach(p => {
-                        if (p.longitude < minX) minX = p.longitude;
-                        if (p.longitude > maxX) maxX = p.longitude;
-                        if (p.latitude < minY) minY = p.latitude;
-                        if (p.latitude > maxY) maxY = p.latitude;
-                    });
-                    extent = {
-                        xmin: minX, ymin: minY, xmax: maxX, ymax: maxY,
-                        spatialReference: view.spatialReference
-                    };
-                    view.goTo(extent).catch(error => {
-                        if (error.name != "AbortError") { // Ignore AbortError if user interacts
-                            console.error("Error zooming to extent: ", error);
-                        }
-                    });
-                }
-            } else {
-                // Maybe show a message if no addresses were successful?
-                console.log("No successful results to zoom to.");
-            }
-        }
-
-        // Function to add a numbered marker to the map
-        function addNumberedMarker(location, number, attributes = null) {
-            if (!location) return; // Don't add marker if location is null
-            const markerSymbol = {
-                type: "simple-marker",
-                color: [226, 119, 40], // Orange
-                outline: {
-                    color: [255, 255, 255], // White
-                    width: 1
-                }
-            };
-            
-            const textSymbol = {
-                type: "text",
-                color: "white",
-                haloColor: "black",
-                haloSize: "1px",
-                text: number.toString(),
-                xoffset: 0,
-                yoffset: -4, // Adjust offset slightly if needed
-                font: { // Define font properties
-                    size: 10,
-                    weight: "bold"
-                }
-            };
-
-            const pointGraphic = new Graphic({
-                geometry: location,
-                symbol: markerSymbol,
-                attributes: attributes || {} // Add attributes if provided
-            });
-
-            const textGraphic = new Graphic({
-                geometry: location,
-                symbol: textSymbol,
-                attributes: attributes || {} // Add attributes if provided
-            });
-
-            csvUploadGraphicsLayer.addMany([pointGraphic, textGraphic]);
-            return [pointGraphic, textGraphic]; // Return graphics for potential interaction
-        }
-
-        // Function to display results from the uploaded file
-        function displayProcessedResults(results) {
-            uploadPropertyListContainer.innerHTML = ''; // Clear spinner/previous content
-            csvUploadGraphicsLayer.removeAll(); // Clear existing graphics before adding new ones
-            highlightGraphicsLayer.removeAll(); // Clear previous highlights
-            
-            // Hide download button initially
-            if (downloadResultsCsvButton) downloadResultsCsvButton.classList.add('hidden');
-
-            if (!results || results.length === 0) {
-                 uploadPropertyListContainer.textContent = 'No results to display.';
-                 return;
-            }
-            
-            const listElement = document.createElement('div');
-            listElement.className = 'property-list'; // Use existing class for styling
-            
-            let successfulResults = []; // To store geometries/points for extent calculation
-            let extent = null; // To calculate extent
-
-            results.forEach(result => {
-                const listItem = document.createElement('div');
-                listItem.className = 'property-list-item';
-                
-                const numberSpan = document.createElement('span');
-                numberSpan.className = 'property-list-number'; // Style like owner search
-                numberSpan.textContent = result.index;
-                
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = 'property-list-details';
-                
-                const addressSpan = document.createElement('div');
-                addressSpan.className = 'property-list-address';
-                addressSpan.textContent = result.originalAddress || 'N/A';
-                
-                const statusSpan = document.createElement('div');
-                statusSpan.className = 'property-list-parcel-id'; // Reuse style
-                statusSpan.style.fontSize = '0.8em'; // Smaller status text
-                
-                detailsDiv.appendChild(addressSpan);
-
-                if (result.status === 'Success') {
-                    statusSpan.textContent = `Parcel: ${result.parcelAttributes.PARID || 'N/A'}`; // Show Parcel ID
-                    listItem.classList.add('success'); // Optional: Add class for styling success
-                    
-                    // Add marker to map (check if mapPoint exists)
-                    if (result.mapPoint) {
-                        addNumberedMarker(result.mapPoint, result.index, result.parcelAttributes);
-                        successfulResults.push(result.mapPoint); // Add point for extent
-                    }
-
-                    // Make list item clickable
-                    listItem.style.cursor = 'pointer';
-                    listItem.addEventListener('click', () => {
-                        if (result.mapPoint) view.goTo({ target: result.mapPoint, zoom: 18 }); // Zoom to the point
-                        // Optionally highlight the parcel polygon if needed
-                        highlightProperty(result.parcelGeometry); 
-                        // Optionally display full info (might be too much for upload list)
-                        // displayParcelInfo(result.parcelAttributes, result.parcelGeometry); 
-                    });
-                } else if (result.status === 'Multiple Parcels Found') {
-                    statusSpan.textContent = `Parcel: ${result.parcelAttributes.PARID || 'N/A'} (Multiple Found)`; 
-                    listItem.classList.add('warning'); // Style for multiple
-                    // Add marker to map (check if mapPoint exists)
-                    if (result.mapPoint) {
-                         addNumberedMarker(result.mapPoint, result.index, result.parcelAttributes);
-                         successfulResults.push(result.mapPoint); // Add point for extent
-                    }
-                     listItem.style.cursor = 'pointer';
-                    listItem.addEventListener('click', () => {
-                        if (result.mapPoint) view.goTo({ target: result.mapPoint, zoom: 18 }); 
-                        if (result.parcelGeometry) highlightProperty(result.parcelGeometry); 
-                    });
-                } else {
-                    statusSpan.textContent = `Status: ${result.status}`;
-                    listItem.classList.add('failed'); // Optional: Add class for styling failures
-                    numberSpan.style.backgroundColor = '#888'; // Grey out number for failures
-                }
-                
-                detailsDiv.appendChild(statusSpan);
-                listItem.appendChild(numberSpan);
-                listItem.appendChild(detailsDiv);
-                listElement.appendChild(listItem);
-            });
-
-            uploadPropertyListContainer.appendChild(listElement);
-
-            // Make the toggle button visible now that there are results
-            if (results && results.length > 0) {
-                toggleProcessedListButton.style.display = 'block';
-                toggleProcessedListButton.textContent = 'Hide Processed Addresses'; // Reset text
-                uploadPropertyListContainer.style.display = 'block'; // Ensure list is visible initially
-            } else {
-                toggleProcessedListButton.style.display = 'none'; // Hide if no results
-            }
-
-            // Show download button if there are results to download
-            if (processedParcelDataForDownload.length > 0 && downloadResultsCsvButton) {
-                console.log(`displayProcessedResults: Making download button visible. Data length: ${processedParcelDataForDownload.length}`); // Add log
-                downloadResultsCsvButton.classList.remove('hidden');
-            } else {
-                 console.log(`displayProcessedResults: Not showing download button. Data length: ${processedParcelDataForDownload ? processedParcelDataForDownload.length : 'null or undefined'}`); // Add log for the else case too
-            }
-
-            // Zoom to the extent of successful results if any
-            if (successfulResults.length > 0) {
-                // Simple extent calculation (more robust libraries exist, but this is basic)
-                if (successfulResults.length === 1) {
-                    view.goTo({ target: successfulResults[0], zoom: 18 });
-                } else {
-                    // Calculate extent (basic implementation)
-                    let minX = successfulResults[0].longitude, maxX = successfulResults[0].longitude;
-                    let minY = successfulResults[0].latitude, maxY = successfulResults[0].latitude;
-                    successfulResults.forEach(p => {
-                        if (p.longitude < minX) minX = p.longitude;
-                        if (p.longitude > maxX) maxX = p.longitude;
-                        if (p.latitude < minY) minY = p.latitude;
-                        if (p.latitude > maxY) maxY = p.latitude;
-                    });
-                    extent = {
-                        xmin: minX, ymin: minY, xmax: maxX, ymax: maxY,
-                        spatialReference: view.spatialReference
-                    };
-                    view.goTo(extent).catch(error => {
-                        if (error.name != "AbortError") { // Ignore AbortError if user interacts
-                            console.error("Error zooming to extent: ", error);
-                        }
-                    });
-                }
-            } else {
-                // Maybe show a message if no addresses were successful?
-                console.log("No successful results to zoom to.");
-            }
-        }
-
         // --- CSV Download Functionality ---
         function downloadResultsAsCSV() {
             console.log(`downloadResultsAsCSV started. Data length: ${processedParcelDataForDownload ? processedParcelDataForDownload.length : 'null or undefined'}`); // Add log
@@ -2319,7 +1826,7 @@ function loadSavedDatasets() {
             if (isHidden) {
                 uploadPropertyListContainer.style.display = 'block';
                 toggleProcessedListButton.textContent = 'Hide Processed Addresses';
-            } else {
+                } else {
                 uploadPropertyListContainer.style.display = 'none';
                 toggleProcessedListButton.textContent = 'Show Processed Addresses';
             }
@@ -2343,10 +1850,10 @@ function loadSavedDatasets() {
                         if (isHidden && uploadPropertyListContainer.children.length > 0) {
                            // Only show if unhiding and the list has content
                            el.style.display = 'block';
-                        } else {
+            } else {
                            el.style.display = 'none';
-                        }
-                    } else {
+            }
+            } else {
                        // Standard toggle for other elements
                        el.style.display = isHidden ? 'block' : 'none';
                     }
@@ -2424,7 +1931,7 @@ function loadSavedDatasets() {
                 favoriteButton.textContent = '★'; // Filled star
                 favoriteButton.title = 'Remove from Favorites';
                 favoriteButton.classList.add('favorited');
-            } else {
+                } else {
                 favoriteButton.textContent = '☆'; // Empty star
                 favoriteButton.title = 'Add to Favorites';
                 favoriteButton.classList.remove('favorited');
@@ -2461,7 +1968,7 @@ function loadSavedDatasets() {
                         } else if (favData.geometry.x !== undefined && favData.geometry.y !== undefined) { // It's a Point JSON
                             geometryObject = Point.fromJSON(favData.geometry);
                             pointForMarker = geometryObject;
-                        } else {
+                } else {
                             console.warn(`Favorite parcel ${parcelId} has unrecognized geometry format.`);
                             continue; // Skip if geometry format is unknown
                         }
@@ -2473,7 +1980,7 @@ function loadSavedDatasets() {
                                 attributes: { ...favData, sourceGeometry: geometryObject } // Store original geometry in attributes if needed
                             });
                             favoriteGraphics.push(graphic);
-                        } else {
+            } else {
                              console.warn(`Could not determine marker location for favorite parcel ${parcelId}.`);
                         }
                     } catch (error) {
@@ -2527,15 +2034,15 @@ function loadSavedDatasets() {
                              if (favData.geometry.type === 'polygon') {
                                 highlightProperty(favData.geometry);
                              }
-                        } else {
+                } else {
                             console.log("Geometry not available for zooming to favorite.");
                             // Maybe trigger a search if only ID is known?
                         }
                         // Optionally hide the favorites list after clicking
                         // favoritesContainer.classList.add('hidden');
                     });
-                    listElement.appendChild(listItem);
-                });
+                listElement.appendChild(listItem);
+            });
                 favoritesListContent.appendChild(listElement);
             }
         }
@@ -2562,7 +2069,7 @@ function loadSavedDatasets() {
                          map: currentParcelData.MapNumber, 
                          geometry: geometryToSave // Pass the geometry object
                      });
-                 } else {
+            } else {
                      console.error("Cannot favorite: Geometry data missing.");
                      alert("Could not add favorite: Parcel geometry is missing.");
                  }
@@ -2606,9 +2113,9 @@ ownerNameSearchButton.addEventListener('click', () => {
         // Instead of alert, maybe clear the list or show a message?
         ownerPropertyListContainer.innerHTML = '<div class="search-message">Please enter an owner name.</div>';
         ownerPropertyListContainer.style.display = 'block'; // Make sure container is visible
-        return;
-    }
-
+                 return;
+            }
+            
     const ownerNameUpper = ownerName.toUpperCase();
     const query = new Query();
     query.where = `UPPER(OWNNAME) LIKE UPPER('%${ownerNameUpper}%')`;
@@ -2663,7 +2170,7 @@ ownerNameSearchButton.addEventListener('click', () => {
                             symbol: {
                                 type: "simple-fill",
                                 color: [255, 165, 0, 0.2],
-                                outline: {
+                outline: {
                                     color: [255, 69, 0, 1],
                                     width: 1.5
                                 }
@@ -2698,33 +2205,33 @@ ownerNameSearchButton.addEventListener('click', () => {
                         view.graphics.add(markerGraphic);
                         
                         // 3. Create list item for the sidebar
-                        const listItem = document.createElement('div');
-                        listItem.className = 'property-list-item';
-                        
-                        const numberSpan = document.createElement('span');
-                        numberSpan.className = 'property-list-number'; // Style like owner search
+                const listItem = document.createElement('div');
+                listItem.className = 'property-list-item';
+                
+                const numberSpan = document.createElement('span');
+                numberSpan.className = 'property-list-number'; // Style like owner search
                         numberSpan.textContent = propertyNumber;
-                        
-                        const detailsDiv = document.createElement('div');
-                        detailsDiv.className = 'property-list-details';
-                        
-                        const addressSpan = document.createElement('div');
-                        addressSpan.className = 'property-list-address';
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'property-list-details';
+                
+                const addressSpan = document.createElement('div');
+                addressSpan.className = 'property-list-address';
                         addressSpan.textContent = propertyAddress;
                         
                         const parcelIdSpan = document.createElement('div');
                         parcelIdSpan.className = 'property-list-parcel-id'; // Reuse style
                         parcelIdSpan.textContent = `Parcel: ${parcelId}`;
-                        
-                        detailsDiv.appendChild(addressSpan);
+                
+                detailsDiv.appendChild(addressSpan);
                         detailsDiv.appendChild(parcelIdSpan);
                         
                         listItem.appendChild(numberSpan);
                         listItem.appendChild(detailsDiv);
-                        
-                        // Make list item clickable
-                        listItem.style.cursor = 'pointer';
-                        listItem.addEventListener('click', () => {
+
+                    // Make list item clickable
+                    listItem.style.cursor = 'pointer';
+                    listItem.addEventListener('click', () => {
                             displayParcelInfo(feature.attributes, feature.geometry);
                         });
                         
@@ -2739,10 +2246,10 @@ ownerNameSearchButton.addEventListener('click', () => {
                             ownerPropertyListContainer.innerHTML = `Found ${results.features.length} properties owned by "${ownerName}". Click on a property below or on the map for details.`;
                             ownerPropertyListContainer.appendChild(propertyListContainer);
                         });
-                } else {
+            } else {
                     // If only one property, display its details
                     displayParcelInfo(results.features[0].attributes, results.features[0].geometry);
-                }
+            }
             } else {
                 // No properties found for this owner
                 ownerPropertyListContainer.innerHTML = `<div class="search-message">No properties found for owner "${ownerName}".</div>`;
