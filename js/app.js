@@ -519,7 +519,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 const currentOrigin = window.location.origin; // e.g., "https://records.suify.com" or "http://localhost:xxxx"
 
                 if (currentOrigin === 'https://records.suify.com') {
-                    proxyUrl = 'https://api.records.suify.com/api/register-proxy'; // Use the public API endpoint
+                    proxyUrl = 'https://apirecords.suify.com/api/register-proxy'; // Use the new public API endpoint
                 } else {
                     // Assume local development otherwise
                     proxyUrl = 'http://localhost:901/api/register-proxy'; // Use localhost:901
