@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shelby County Parcel Viewer</title>
+    <!-- ArcGIS API for JavaScript -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/dark/main.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <!-- Add PapaParse library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+    <!-- Add SheetJS library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div id="app-container">
+        <header>
+            <h1>Shelby County Parcel Viewer</h1>
+        </header>
+        <div id="main-content">
+            <div id="viewDiv"></div>
+            <div id="sidebar">
+                <div id="search-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h2>Search</h2>
+                        <div> <!-- Wrapper for buttons -->
+                            <button id="show-favorites-button" class="action-button" title="Show Favorites" style="padding: 2px 6px; font-size: 0.8em; margin-right: 5px;">⭐ Favorites</button>
+                            <button id="toggle-search-content-button" class="action-button" title="Toggle Search Panel Visibility" style="padding: 2px 6px; font-size: 0.8em;">Hide</button>
+                        </div>
+                    </div>
+                    <div class="search-group">
+                        <label for="search-input">Search by Address, Parcel ID, or Owner Name:</label>
+                        <input type="text" id="search-input" placeholder="Search by Address, Parcel ID, or Owner Name">
+                        <button id="search-button">Search</button>
+                        <!-- Moved Toggle Button for Processed Address List -->
+                        <button id="toggle-processed-list-button" class="action-button" style="margin-top: 10px; display: none;">Hide Processed Addresses</button>
+                    </div>
+
+                    <!-- File Upload Section -->
+                    <div id="upload-section" class="info-group">
+                        <!-- Saved Datasets Section -->
+                        <div id="saved-datasets-section" class="info-group" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #444;">
+                            <h4>Load Saved Dataset</h4>
+                            <p>Load a previously processed dataset from your browser's storage.</p>
+                            <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                                <select id="saved-datasets-select" style="flex-grow: 1;">
+                                    <option value="">-- Select a saved dataset --</option>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                                <button id="load-saved-dataset-button" class="action-button" title="Load selected dataset">Load</button>
+                                <button id="delete-saved-dataset-button" class="action-button danger-button" title="Delete selected dataset">Delete</button>
+                            </div>
+                            <div id="saved-datasets-status" style="margin-top: 5px; font-size: 0.9em; font-style: italic;"></div>
+                        </div>
+                        <!-- End Saved Datasets Section -->
+
+                        <h3>Upload Property List</h3>
+                        <p>Upload a CSV or Excel file with property addresses.</p>
+                        <input type="file" id="file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                        <div id="column-selection" class="hidden" style="margin-top: 10px;">
+                            <label for="address-column-select">Select Address Column:</label>
+                            <select id="address-column-select" style="width: 100%; margin-bottom: 10px;"></select>
+                            <button id="process-file-button" class="action-button" style="width: 100%;">Process Addresses</button>
+                        </div>
+                        <div id="upload-status" style="margin-top: 10px; font-style: italic;"></div>
+                        <!-- Container for the list of properties from the uploaded file -->
+                        <div id="upload-property-list-container"></div>
+                        <!-- Add the Download CSV Button -->
+                        <button id="download-results-csv" class="action-button hidden" style="margin-top: 10px; width: 100%;">Download Results CSV</button>
+                    </div>
+                    <!-- End File Upload Section -->
+
+                    <!-- Container for property search results list -->
+                    <div id="property-list-container"></div>
+                </div>
+
+                <!-- Container for Favorites List -->
+                <div id="favorites-container" class="hidden" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #444;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                         <h2>Favorites</h2>
+                         <button id="hide-favorites-button" class="action-button" title="Hide Favorites" style="padding: 2px 6px; font-size: 0.8em;">Hide</button>
+                    </div>
+                    <div id="favorites-list-content" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Favorite items will be populated here -->
+                        <p id="no-favorites-message">You haven't favorited any properties yet.</p>
+                    </div>
+                </div>
+                <!-- End Favorites Container -->
+
+                <div id="parcel-info">
+                    <h2>Parcel Information</h2>
+                    <p class="instructions">Click on a parcel to view comprehensive property details.</p>
+                    
+                    <!-- Tabbed navigation for parcel details -->
+                    <div id="parcel-tabs" class="hidden">
+                        <button class="tab-button active" data-tab="basic-info">Basic Info</button>
+                        <button class="tab-button" data-tab="sales-history">Sales History</button>
+                        <button class="tab-button" data-tab="tax-info">Tax Info</button>
+                        <button class="tab-button" data-tab="documents">Documents</button>
+                    </div>
+                    
+                    <div id="parcel-details" class="hidden">
+                        <!-- Basic Information Tab -->
+                        <div id="basic-info" class="tab-content active">
+                            <div class="info-group">
+                                <h3>Property Information</h3>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div class="info-row"><span class="label">Parcel ID:</span> <span id="parcel-id"></span></div>
+                                    <button id="favorite-button" class="favorite-button" title="Add to Favorites" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: #aaa;">☆</button>
+                                </div>
+                                <div class="info-row"><span class="label">Map:</span> <span id="parcel-map"></span></div>
+                                <div class="info-row"><span class="label">Address:</span> <span id="parcel-address"></span></div>
+                                <div class="info-row"><span class="label">ZIP:</span> <span id="parcel-zip"></span></div>
+                                <div class="info-row"><span class="label">Alt ID:</span> <span id="parcel-alt-id"></span></div>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>Owner Information</h3>
+                                <div class="info-row"><span class="label">Name:</span> <a href="#" id="owner-name" class="interactive-link" title="Click to see all properties owned by this person"></a></div>
+                                <div class="info-row"><span class="label">Additional Owner:</span> <span id="owner-ext"></span></div>
+                                <div class="info-row"><span class="label">Mailing Address:</span> <a href="#" id="owner-address" class="interactive-link" title="Click to go to this address (if in Shelby County)"></a></div>
+                                <div class="info-row"><span class="label">City, State ZIP:</span> <span id="owner-city-state-zip"></span></div>
+                                <div class="info-row"><span class="label">Notes:</span> <span id="owner-notes"></span></div>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>Assessment Information</h3>
+                                <div class="info-row"><span class="label">Neighborhood:</span> <span id="neighborhood"></span></div>
+                                <div class="info-row"><span class="label">Land Use:</span> <span id="land-use"></span></div>
+                                <div class="info-row"><span class="label">Property Class:</span> <span id="property-class"></span></div>
+                                <div class="info-row"><span class="label">Zoning:</span> <span id="zoning"></span></div>
+                                <div class="info-row"><span class="label">Living Units:</span> <span id="living-units"></span></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Property Documents Tab -->
+                        <div id="sales-history" class="tab-content">
+                            <div class="info-group">
+                                <h3>Property Documents & Transactions</h3>
+                                
+                                <div class="data-notice">
+                                    <i class="icon-info"></i> Showing the most current property documents directly from the Register of Deeds database.
+                                </div>
+                                
+                                
+                                <div id="sales-table-container">
+                                    <table id="sales-table" class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Price</th>
+                                                <th>Book/Page</th>
+                                                <th>Instrument Type</th>
+                                                <th>Document</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="sales-data">
+                                            <!-- Document data rows will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="no-sales-data" class="no-data-message hidden">No document history available for this parcel.</div>
+                                
+                                <div class="direct-search-section">
+                                    <h4>Find All Current Property Documents</h4>
+                                    <p>View the most recent transactions and documents for this property:</p>
+                                    <a id="register-search-link" href="#" target="_blank" class="primary-button">
+                                        <i class="icon-search"></i> Search Register of Deeds Records
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tax Information Tab -->
+                        <div id="tax-info" class="tab-content">
+                            <div class="info-group">
+                                <h3>Property Tax Information</h3>
+                                <p>For detailed tax information, please visit:</p>
+                                <div class="external-links">
+                                    <a id="assessor-link" href="#" target="_blank" class="external-button">
+                                        <i class="icon-tax"></i> Shelby County Assessor
+                                    </a>
+                                    <a id="trustee-link" href="#" target="_blank" class="external-button">
+                                        <i class="icon-money"></i> Shelby County Trustee
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Documents Tab -->
+                        <div id="documents" class="tab-content">
+                            <div class="info-group">
+                                <h3>Property Documents</h3>
+                                <div class="external-links">
+                                    <a id="deeds-link" href="#" target="_blank" class="external-button">
+                                        <i class="icon-document"></i> Register of Deeds Records
+                                    </a>
+                                    <a id="permits-link" href="#" target="_blank" class="external-button">
+                                        <i class="icon-building"></i> Building Permits
+                                    </a>
+                                    <a id="planning-link" href="#" target="_blank" class="external-button">
+                                        <i class="icon-map"></i> Planning & Zoning
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="report-container" class="hidden">
+                    <button id="print-report" class="action-button">
+                        <i class="icon-print"></i> Print Property Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script src="https://js.arcgis.com/4.29/"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

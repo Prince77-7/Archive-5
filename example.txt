@@ -1,0 +1,427 @@
+{
+	"displayFieldName": "MAP",
+	"fieldAliases": {
+		"OBJECTID": "OBJECTID",
+		"MAP": "MAP",
+		"PARCELID": "PARCELID",
+		"PARID": "PARID",
+		"OWNER": "OWNER",
+		"OWNER_EXT": "OWNER_EXT",
+		"OWN_ADRNO": "OWN_ADRNO",
+		"OWN_ADRPREDIR": "OWN_ADRPREDIR",
+		"OWN_ADRSTR": "OWN_ADRSTR",
+		"OWN_ADRSUF": "OWN_ADRSUF",
+		"OWN_ADRPOSTDIR": "OWN_ADRPOSTDIR",
+		"OWN_CITY": "OWN_CITY",
+		"OWN_STATE": "OWN_STATE",
+		"OWN_UNITDESC": "OWN_UNITDESC",
+		"OWN_UNITNO": "OWN_UNITNO",
+		"OWN_ADDR1": "OWN_ADDR1",
+		"OWN_ADDR2": "OWN_ADDR2",
+		"OWN_ADDR3": "OWN_ADDR3",
+		"OWN_ZIP": "OWN_ZIP",
+		"OWN_ZIP4": "OWN_ZIP4",
+		"OWN_NOTE1": "OWN_NOTE1",
+		"OWN_NOTE2": "OWN_NOTE2",
+		"PAR_ALTID": "PAR_ALTID",
+		"PAR_ADRNO": "PAR_ADRNO",
+		"PAR_ADRADD": "PAR_ADRADD",
+		"PAR_ADRPREDIR": "PAR_ADRPREDIR",
+		"PAR_ADRSTR": "PAR_ADRSTR",
+		"PAR_ADRSUF": "PAR_ADRSUF",
+		"PAR_ADRPOSTDIR": "PAR_ADRPOSTDIR",
+		"PAR_UNITDESC": "PAR_UNITDESC",
+		"PAR_UNITNO": "PAR_UNITNO",
+		"NBHD": "NBHD",
+		"CLASS": "CLASS",
+		"LUC": "LUC",
+		"LIVUNIT": "LIVUNIT",
+		"ZONING": "ZONING",
+		"PAR_NOTE1": "PAR_NOTE1",
+		"PAR_NOTE2": "PAR_NOTE2",
+		"PAR_ZIP": "PAR_ZIP",
+		"PAR_ADDR1": "PropertyLocationAddress",
+		"TPARCEL": "TPARCEL",
+		"PAID": "PAID",
+		"LANDUSE": "LandUse",
+		"MUNI": "Municipality",
+		"Longitude": "Longitude",
+		"Latitude": "Latitude",
+		"TAXYR": "TAXYR",
+		"Shape.STArea()": "Shape.STArea()",
+		"Shape.STLength()": "Shape.STLength()"
+	},
+	"geometryType": "esriGeometryPolygon",
+	"spatialReference": {
+		"wkt": "PROJCS[\"WGS_1984_Web_Mercator_Auxiliary_Sphere\",GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137.0,298.257223563]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Mercator_Auxiliary_Sphere\"],PARAMETER[\"False_Easting\",0.0],PARAMETER[\"False_Northing\",0.0],PARAMETER[\"Central_Meridian\",0.0],PARAMETER[\"Standard_Parallel_1\",0.0],PARAMETER[\"Auxiliary_Sphere_Type\",0.0],UNIT[\"Meter\",1.0]],VERTCS[\"NAVD88 height - Geoid12B (ftUS)\",VDATUM[\"North American Vertical Datum 1988\"],UNIT[\"US survey foot\",0.3048006096012192]]"
+	},
+	"fields": [
+		{
+			"name": "OBJECTID",
+			"type": "esriFieldTypeOID",
+			"alias": "OBJECTID"
+		},
+		{
+			"name": "MAP",
+			"type": "esriFieldTypeString",
+			"alias": "MAP",
+			"length": 5
+		},
+		{
+			"name": "PARCELID",
+			"type": "esriFieldTypeString",
+			"alias": "PARCELID",
+			"length": 15
+		},
+		{
+			"name": "PARID",
+			"type": "esriFieldTypeString",
+			"alias": "PARID",
+			"length": 30
+		},
+		{
+			"name": "OWNER",
+			"type": "esriFieldTypeString",
+			"alias": "OWNER",
+			"length": 40
+		},
+		{
+			"name": "OWNER_EXT",
+			"type": "esriFieldTypeString",
+			"alias": "OWNER_EXT",
+			"length": 40
+		},
+		{
+			"name": "OWN_ADRNO",
+			"type": "esriFieldTypeDouble",
+			"alias": "OWN_ADRNO"
+		},
+		{
+			"name": "OWN_ADRPREDIR",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_ADRPREDIR",
+			"length": 2
+		},
+		{
+			"name": "OWN_ADRSTR",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_ADRSTR",
+			"length": 30
+		},
+		{
+			"name": "OWN_ADRSUF",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_ADRSUF",
+			"length": 8
+		},
+		{
+			"name": "OWN_ADRPOSTDIR",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_ADRPOSTDIR",
+			"length": 5
+		},
+		{
+			"name": "OWN_CITY",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_CITY",
+			"length": 40
+		},
+		{
+			"name": "OWN_STATE",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_STATE",
+			"length": 2
+		},
+		{
+			"name": "OWN_UNITDESC",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_UNITDESC",
+			"length": 10
+		},
+		{
+			"name": "OWN_UNITNO",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_UNITNO",
+			"length": 10
+		},
+		{
+			"name": "OWN_ADDR1",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_ADDR1",
+			"length": 80
+		},
+		{
+			"name": "OWN_ADDR2",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_ADDR2",
+			"length": 80
+		},
+		{
+			"name": "OWN_ADDR3",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_ADDR3",
+			"length": 80
+		},
+		{
+			"name": "OWN_ZIP",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_ZIP",
+			"length": 5
+		},
+		{
+			"name": "OWN_ZIP4",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_ZIP4",
+			"length": 4
+		},
+		{
+			"name": "OWN_NOTE1",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_NOTE1",
+			"length": 40
+		},
+		{
+			"name": "OWN_NOTE2",
+			"type": "esriFieldTypeString",
+			"alias": "OWN_NOTE2",
+			"length": 40
+		},
+		{
+			"name": "PAR_ALTID",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_ALTID",
+			"length": 30
+		},
+		{
+			"name": "PAR_ADRNO",
+			"type": "esriFieldTypeDouble",
+			"alias": "PAR_ADRNO"
+		},
+		{
+			"name": "PAR_ADRADD",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_ADRADD",
+			"length": 6
+		},
+		{
+			"name": "PAR_ADRPREDIR",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_ADRPREDIR",
+			"length": 2
+		},
+		{
+			"name": "PAR_ADRSTR",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_ADRSTR",
+			"length": 30
+		},
+		{
+			"name": "PAR_ADRSUF",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_ADRSUF",
+			"length": 8
+		},
+		{
+			"name": "PAR_ADRPOSTDIR",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_ADRPOSTDIR",
+			"length": 5
+		},
+		{
+			"name": "PAR_UNITDESC",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_UNITDESC",
+			"length": 10
+		},
+		{
+			"name": "PAR_UNITNO",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_UNITNO",
+			"length": 10
+		},
+		{
+			"name": "NBHD",
+			"type": "esriFieldTypeString",
+			"alias": "NBHD",
+			"length": 8
+		},
+		{
+			"name": "CLASS",
+			"type": "esriFieldTypeString",
+			"alias": "CLASS",
+			"length": 4
+		},
+		{
+			"name": "LUC",
+			"type": "esriFieldTypeString",
+			"alias": "LUC",
+			"length": 4
+		},
+		{
+			"name": "LIVUNIT",
+			"type": "esriFieldTypeString",
+			"alias": "LIVUNIT",
+			"length": 3
+		},
+		{
+			"name": "ZONING",
+			"type": "esriFieldTypeString",
+			"alias": "ZONING",
+			"length": 8
+		},
+		{
+			"name": "PAR_NOTE1",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_NOTE1",
+			"length": 40
+		},
+		{
+			"name": "PAR_NOTE2",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_NOTE2",
+			"length": 40
+		},
+		{
+			"name": "PAR_ZIP",
+			"type": "esriFieldTypeString",
+			"alias": "PAR_ZIP",
+			"length": 5
+		},
+		{
+			"name": "PAR_ADDR1",
+			"type": "esriFieldTypeString",
+			"alias": "PropertyLocationAddress",
+			"length": 80
+		},
+		{
+			"name": "TPARCEL",
+			"type": "esriFieldTypeString",
+			"alias": "TPARCEL",
+			"length": 30
+		},
+		{
+			"name": "PAID",
+			"type": "esriFieldTypeString",
+			"alias": "PAID",
+			"length": 30
+		},
+		{
+			"name": "LANDUSE",
+			"type": "esriFieldTypeString",
+			"alias": "LandUse",
+			"length": 50
+		},
+		{
+			"name": "MUNI",
+			"type": "esriFieldTypeString",
+			"alias": "Municipality",
+			"length": 30
+		},
+		{
+			"name": "Longitude",
+			"type": "esriFieldTypeDouble",
+			"alias": "Longitude"
+		},
+		{
+			"name": "Latitude",
+			"type": "esriFieldTypeDouble",
+			"alias": "Latitude"
+		},
+		{
+			"name": "TAXYR",
+			"type": "esriFieldTypeInteger",
+			"alias": "TAXYR"
+		},
+		{
+			"name": "Shape.STArea()",
+			"type": "esriFieldTypeDouble",
+			"alias": "Shape.STArea()"
+		},
+		{
+			"name": "Shape.STLength()",
+			"type": "esriFieldTypeDouble",
+			"alias": "Shape.STLength()"
+		}
+	],
+	"features": [
+		{
+			"attributes": {
+				"OBJECTID": 1491845,
+				"MAP": "155I",
+				"PARCELID": "061032  00002",
+				"PARID": "061032  00002",
+				"OWNER": "PATTERSON CHRISTOPHER",
+				"OWNER_EXT": null,
+				"OWN_ADRNO": 9972,
+				"OWN_ADRPREDIR": null,
+				"OWN_ADRSTR": "HOUSTON BIRCH",
+				"OWN_ADRSUF": "DR",
+				"OWN_ADRPOSTDIR": null,
+				"OWN_CITY": "CORDOVA",
+				"OWN_STATE": "TN",
+				"OWN_UNITDESC": null,
+				"OWN_UNITNO": null,
+				"OWN_ADDR1": null,
+				"OWN_ADDR2": null,
+				"OWN_ADDR3": null,
+				"OWN_ZIP": "38016",
+				"OWN_ZIP4": "7137",
+				"OWN_NOTE1": null,
+				"OWN_NOTE2": null,
+				"PAR_ALTID": "",
+				"PAR_ADRNO": 2645,
+				"PAR_ADRADD": "",
+				"PAR_ADRPREDIR": "",
+				"PAR_ADRSTR": "SUPREME",
+				"PAR_ADRSUF": "AVE",
+				"PAR_ADRPOSTDIR": null,
+				"PAR_UNITDESC": "",
+				"PAR_UNITNO": "",
+				"NBHD": "00715C01",
+				"CLASS": "R",
+				"LUC": "062",
+				"LIVUNIT": "1",
+				"ZONING": "R-6",
+				"PAR_NOTE1": "",
+				"PAR_NOTE2": "",
+				"PAR_ZIP": "38114",
+				"PAR_ADDR1": "2645 SUPREME AVE ",
+				"TPARCEL": "0610320000002",
+				"PAID": "06103200002",
+				"LANDUSE": "SINGLE-FAMILY",
+				"MUNI": "MEMPHIS",
+				"Longitude": null,
+				"Latitude": null,
+				"TAXYR": 2024,
+				"Shape.STArea()": 828.609375,
+				"Shape.STLength()": 125.02334027294847
+			},
+			"geometry": {
+				"rings": [
+					[
+						[
+							-10015873.4669,
+							4178220.1691000015
+						],
+						[
+							-10015874.8128,
+							4178176.7817
+						],
+						[
+							-10015893.8796,
+							4178177.3654000014
+						],
+						[
+							-10015892.5346,
+							4178220.8056000024
+						],
+						[
+							-10015873.4669,
+							4178220.1691000015
+						]
+					]
+				]
+			}
+		}
+	]
+}
