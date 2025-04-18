@@ -12,11 +12,16 @@ const PORT = process.env.PORT || 901;
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests from specific origins or if no origin (like server-to-server or REST tools)
-    const allowedOrigins = ['https://records.suify.com', 'http://localhost:901']; // Add other local dev ports if needed
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost:')) {
+    const allowedOrigins = [
+        'https://records.suify.com', 
+        // Add other allowed origins if needed, e.g., specific local dev setups
+        // 'http://localhost:8080' // Example: If your local frontend runs here
+    ]; 
+    // Allow requests with no origin OR from localhost OR from the allowed list
+    if (!origin || origin.startsWith('http://localhost:') || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true)
     } else {
+      console.warn(`CORS blocked for origin: ${origin}`); // Log blocked origins
       callback(new Error('Not allowed by CORS'))
     }
   },

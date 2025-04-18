@@ -514,10 +514,17 @@ document.addEventListener("DOMContentLoaded", function() {
             function fetchThroughProxy(pid) {
                 console.log('Fetching Register data through proxy for:', pid);
                 
-                // Determine the proxy URL (local or production)
-                const proxyUrl = window.location.port === '901' ? 
-                    '/api/register-proxy' : // If already running on our Express server
-                    'http://localhost:901/api/register-proxy'; // Otherwise use localhost:901
+                // Determine the proxy URL based on the frontend origin
+                let proxyUrl;
+                const currentOrigin = window.location.origin; // e.g., "https://records.suify.com" or "http://localhost:xxxx"
+
+                if (currentOrigin === 'https://records.suify.com') {
+                    proxyUrl = 'https://api.records.suify.com/api/register-proxy'; // Use the public API endpoint
+                } else {
+                    // Assume local development otherwise
+                    proxyUrl = 'http://localhost:901/api/register-proxy'; // Use localhost:901
+                }
+                console.log(`Using proxy URL: ${proxyUrl}`); // Log the URL being used
                 
                 // Make the request to our proxy endpoint
                 fetch(proxyUrl, {
