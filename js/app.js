@@ -515,9 +515,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 console.log('Fetching Register data through proxy for:', pid);
                 
                 // Determine the proxy URL (local or production)
-                const proxyUrl = window.location.port === '3000' ? 
+                const proxyUrl = window.location.port === '901' ? 
                     '/api/register-proxy' : // If already running on our Express server
-                    'http://localhost:3000/api/register-proxy'; // Otherwise use localhost
+                    'http://localhost:901/api/register-proxy'; // Otherwise use localhost:901
                 
                 // Make the request to our proxy endpoint
                 fetch(proxyUrl, {
