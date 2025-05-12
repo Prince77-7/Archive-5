@@ -16,6 +16,9 @@
     <div id="app-container">
         <header>
             <h1>Shelby County Parcel Viewer</h1>
+            <div class="header-buttons">
+                <button id="gis-dashboard-button" class="action-button">GIS Dashboard</button>
+            </div>
         </header>
         <div id="main-content">
             <div id="viewDiv"></div>
@@ -246,7 +249,42 @@
         </div>
 
     </div>
+
+    <!-- Full-screen iframe modal -->
+    <div id="iframe-modal" class="iframe-modal hidden">
+        <iframe id="gis-iframe" src="" frameborder="0" allowfullscreen></iframe>
+        <button id="close-iframe-modal" class="floating-back-button">&larr;</button>
+    </div>
+
     <script src="https://js.arcgis.com/4.29/"></script>
     <script src="js/app.js"></script>
+    
+    <!-- Add modal script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dashboardButton = document.getElementById('gis-dashboard-button');
+            const modal = document.getElementById('iframe-modal');
+            const closeButton = document.getElementById('close-iframe-modal');
+            const iframe = document.getElementById('gis-iframe');
+            const dashboardUrl = 'https://scgis.shelbycountytn.gov/portal/apps/opsdashboard/#/045cc7230d5145eeb1f8a46924738fdd';
+            
+            // Open modal with iframe
+            dashboardButton.addEventListener('click', function() {
+                iframe.src = dashboardUrl;
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent scrolling
+            });
+            
+            // Close modal
+            closeButton.addEventListener('click', function() {
+                modal.classList.add('hidden');
+                document.body.style.overflow = ''; // Restore scrolling
+                // Delay iframe source clearing to prevent visible transition
+                setTimeout(() => {
+                    iframe.src = '';
+                }, 300);
+            });
+        });
+    </script>
 </body>
 </html>

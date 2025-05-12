@@ -1288,3 +1288,103 @@ footer {
         z-index: 10;
     }
 }
+
+/* Header buttons container */
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* GIS Dashboard button */
+#gis-dashboard-button {
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-medium);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+}
+
+#gis-dashboard-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+#gis-dashboard-button:active {
+    transform: translateY(0);
+}
+
+/* Full-screen iframe modal */
+.iframe-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-color);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transition: opacity var(--transition-medium);
+}
+
+.iframe-modal.hidden {
+    display: none;
+}
+
+/* Floating back button */
+.floating-back-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1001;
+    transition: all var(--transition-medium);
+}
+
+.floating-back-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.floating-back-button:active {
+    transform: scale(0.95);
+}
+
+#gis-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+@media (max-width: 768px) {
+    .header-buttons {
+        margin-top: 10px;
+    }
+    
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    #gis-dashboard-button {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
+}
