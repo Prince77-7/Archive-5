@@ -208,6 +208,42 @@ document.addEventListener("DOMContentLoaded", function() {
         const currentDocsLink = document.getElementById("current-docs-link");
         const registerSearchLink = document.getElementById("register-search-link");
 
+        // Helper to format Parcel ID for external links (especially Trustee)
+        function formatParcelIdForTrustee(parcelId) {
+            if (!parcelId) return '';
+            let pidStr = String(parcelId).trim().toUpperCase();
+            
+            const parts = pidStr.split(/\s+/).filter(p => p !== ''); // Split by spaces and remove empty parts
+
+            if (parts.length >= 2) {
+                const firstPart = parts[0];
+                const secondPart = parts[1]; // The part immediately after the first space(s)
+                const remainingParts = parts.slice(2).join(""); // Any subsequent parts joined directly
+
+                // Check if the second part starts with a letter
+                if (secondPart && /^[A-Z]/.test(secondPart.charAt(0))) {
+                    // Second part starts with a letter, use a single '0' as separator
+                    pidStr = firstPart + "0" + secondPart + remainingParts;
+                } else {
+                    // Second part starts with a digit (or is empty/not a letter), use double '00'
+                    pidStr = firstPart + "00" + secondPart + remainingParts;
+                }
+            } else if (parts.length === 1) {
+                // Only one part, meaning no spaces were found (or only leading/trailing, handled by trim)
+                pidStr = parts[0];
+            } else {
+                // No parts, likely an empty or whitespace-only original string
+                // or unusual spacing. Default to original trimmed/uppercased and let the final '0' be added.
+                // This case should be rare if parcelId is valid.
+            }
+            
+            // Append a "0" to the end
+            pidStr += "0";
+            
+            console.log(`Formatted Trustee PID: Original='${parcelId}', Formatted='${pidStr}'`);
+            return pidStr;
+        }
+
         // File Upload Elements
         const fileInput = document.getElementById("file-input");
         const columnSelectionDiv = document.getElementById("column-selection");
@@ -397,10 +433,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 // Set up the external links
                 const parcelId = attributes.PARCELID || "";
                 const address = attributes.PAR_ADDR1 || "";
+                const formattedTrusteeParcelId = formatParcelIdForTrustee(parcelId);
                 
                 // Set links to external resources
-                assessorLink.href = externalLinks.assessor.replace("PARCELID", parcelId);
-                trusteeLink.href = externalLinks.trustee;
+                assessorLink.href = externalLinks.assessor.replace("PARCELID", parcelId); // Assessor might use different PID format
+                trusteeLink.href = formattedTrusteeParcelId ? `https://apps.shelbycountytrustee.com/TaxQuery/Inquiry.aspx?ParcelID=${formattedTrusteeParcelId}` : "#";
                 deedsLink.href = externalLinks.deedsSearch.replace("{PARCELID}", parcelId);
                 permitsLink.href = externalLinks.permits;
                 planningLink.href = externalLinks.planning;
@@ -770,6 +807,141 @@ document.addEventListener("DOMContentLoaded", function() {
             // Function to safely get text content from an element by ID
             const getText = (id) => document.getElementById(id)?.textContent || "N/A";
 
+            // --- Function to fetch and parse Trustee Tax Data ---
+            async function fetchAndParseTrusteeData(parcelIdForTrustee) {
+                console.log("fetchAndParseTrusteeData called with:", parcelIdForTrustee);
+                if (!parcelIdForTrustee) {
+                    return {
+                        trusteeOwnerInfoHtml: '<p>Trustee Parcel ID could not be formatted for owner info.</p>',
+                        summaryTableHtml: '<p>Trustee Parcel ID could not be formatted for summary.</p>',
+                        paymentHistoryHtml: ''
+                    };
+                }
+
+                try {
+                    const response = await fetch(`/api/trustee-tax-proxy?parcelId=${encodeURIComponent(parcelIdForTrustee)}`);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error("Error fetching trustee data from proxy:", response.status, errorText);
+                        let userMessage = `<p>Error fetching tax data from Trustee (Status: ${response.status}).</p>`;
+                        if (response.status === 404) {
+                            userMessage += '<p>The proxy endpoint was not found. Ensure server.js is running and the route is correct.</p>';
+                        } else {
+                             userMessage += `<p>${errorText}</p>`;
+                        }
+                        return {
+                            trusteeOwnerInfoHtml: userMessage, // Show error here as well
+                            summaryTableHtml: userMessage,
+                            paymentHistoryHtml: ''
+                        };
+                    }
+
+                    const htmlString = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlString, "text/html");
+
+                    let trusteeOwnerInfoHtml = '';
+                    let summaryTableHtml = '';
+                    let paymentHistoryHtml = '<p>Detailed payment history (transactions per year) is available on the <a href="https://apps.shelbycountytrustee.com/TaxQuery/Inquiry.aspx?ParcelID=' + parcelIdForTrustee + '" target="_blank">Shelby County Trustee website</a> by clicking on a specific tax year.</p>';
+
+                    // --- Extract Owner and Property Info ---
+                    const ownerTable = doc.querySelector('table#ownerFormView');
+                    if (ownerTable) {
+                        trusteeOwnerInfoHtml += '<h5>Owner & Property Information (from Trustee)</h5><div class="section-grid">';
+                        const rows = ownerTable.querySelectorAll('tr');
+                        const infoToExtract = {
+                            "Owner Name:": null,
+                            "Property Location:": null,
+                            "Mailing Address:": null,
+                            "Parcel ID#:": null // Note the # symbol
+                        };
+
+                        rows.forEach(row => {
+                            const cells = row.querySelectorAll('td');
+                            if (cells.length >= 2) {
+                                const labelElem = cells[0].querySelector('strong') || cells[0];
+                                const labelText = labelElem.textContent.trim();
+                                
+                                if (infoToExtract.hasOwnProperty(labelText)) {
+                                    infoToExtract[labelText] = cells[1].textContent.trim();
+                                }
+                            }
+                        });
+
+                        for (const label in infoToExtract) {
+                            trusteeOwnerInfoHtml += `<div class="info-item"><span class="label">${label.replace(':','')}</span> <span class="value">${infoToExtract[label] || 'N/A'}</span></div>`;
+                        }
+                        trusteeOwnerInfoHtml += '</div>'; // Close section-grid
+                    } else {
+                        trusteeOwnerInfoHtml = '<p>Could not parse owner/property information from Trustee site.</p>';
+                    }
+                    // --- End Owner and Property Info ---
+
+                    // Try to find the main tax summary table
+                    const allTables = doc.querySelectorAll('#PanelMain table');
+                    let taxYearsTable = null;
+                    let totalsTable = null;
+
+                    allTables.forEach(table => {
+                        const headerRow = table.querySelector('tr.headerBackground');
+                        if (headerRow) {
+                            const headers = Array.from(headerRow.querySelectorAll('th')).map(th => th.textContent.trim());
+                            if (headers.includes('Year') && headers.includes('Assessment') && headers.includes('Total Due')) {
+                                taxYearsTable = table;
+                            }
+                        }
+                        // Try to find the totals table based on span IDs within it
+                        if (table.querySelector('span#LabelTaxSum') && table.querySelector('span#LabelDueSum')) {
+                            totalsTable = table;
+                        }
+                    });
+                    
+                    if (taxYearsTable) {
+                        // Clone the table to avoid modifying the original DOM structure from the parser
+                        const clonedTable = taxYearsTable.cloneNode(true);
+                        // Remove any hyperlinks from the year column to prevent issues in print
+                        clonedTable.querySelectorAll('td a[href*="Drilldown.aspx"]').forEach(link => {
+                            const parentTd = link.parentNode;
+                            parentTd.textContent = link.textContent; // Replace link with its text content
+                        });
+                        summaryTableHtml += '<h5>Tax Year Summary</h5>' + clonedTable.outerHTML;
+                    } else {
+                        summaryTableHtml += '<p>Could not parse summary tax information. The table structure on the Trustee site may have changed.</p>';
+                    }
+
+                    if (totalsTable) {
+                        summaryTableHtml += '<h5>Totals</h5>' + totalsTable.outerHTML;
+                    } else {
+                         summaryTableHtml += '<p>Could not parse tax totals. The table structure on the Trustee site may have changed.</p>';
+                    }
+
+
+                    // The detailed payment history (dgrdTaxYear) is typically on a separate page (Drilldown.aspx)
+                    // So we will just keep the note about it.
+                    // If it *were* on this page, you might look for it like this:
+                    // const paymentHistoryTable = doc.querySelector('table[id*="dgrdTaxYear"]');
+                    // if (paymentHistoryTable) {
+                    //     paymentHistoryHtml = '<h5>Tax Payment History</h5>' + paymentHistoryTable.outerHTML;
+                    // } else {
+                    //     paymentHistoryHtml += '<p>Could not parse tax payment history. Tax table selector not found or structure differs.</p>';
+                    // }
+                    // For now, the placeholder message for paymentHistoryHtml is sufficient.
+
+                    console.log("Parsed Trustee Data:", { trusteeOwnerInfoHtml, summaryTableHtml, paymentHistoryHtml });
+
+                    return { trusteeOwnerInfoHtml, summaryTableHtml, paymentHistoryHtml };
+
+                } catch (error) {
+                    console.error("Error in fetchAndParseTrusteeData:", error);
+                    return {
+                        trusteeOwnerInfoHtml: `<p>Client-side error processing Trustee owner data: ${error.message}</p>`,
+                        summaryTableHtml: `<p>Client-side error processing Trustee summary data: ${error.message}</p>`,
+                        paymentHistoryHtml: ''
+                    };
+                }
+            }
+            // --- End Function to fetch and parse Trustee Tax Data ---
+
             // Clone relevant sections for printing to ensure all data is captured
             // We need to be more selective to avoid cloning interactive elements or overly complex structures
             let basicInfoHtml = "";
@@ -878,6 +1050,14 @@ document.addEventListener("DOMContentLoaded", function() {
                             border-bottom: 1px dashed #ddd;
                             font-weight: 500;
                         }
+                         /* Sub-section titles within Trustee info */
+                        #trustee-tax-info h4, .trustee-section h4 {
+                            font-size: 16px;
+                            color: #1a3a5f;
+                            margin-top: 15px;
+                            margin-bottom: 8px;
+                            font-weight: 500;
+                        }
                         .section-grid {
                             display: grid;
                             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -903,19 +1083,21 @@ document.addEventListener("DOMContentLoaded", function() {
                             color: #111;
                             word-break: break-word;
                         }
-                        /* Sales Table Styles */
-                        #sales-table-container {
-                            margin-top: 10px;
+                        /* Sales & Tax Table Styles */
+                        .data-table-wrapper {
+                            overflow-x: auto; /* For very wide tables */
+                            margin-bottom: 20px;
                         }
                         .data-table {
                             width: 100%;
                             border-collapse: collapse;
-                            font-size: 13px;
+                            font-size: 12px; /* Slightly smaller for potentially dense tax tables */
                         }
                         .data-table th, .data-table td {
                             border: 1px solid #ddd;
-                            padding: 10px;
+                            padding: 8px; /* Slightly smaller padding */
                             text-align: left;
+                            white-space: nowrap; /* Prevent wrapping in table cells */
                         }
                         .data-table th {
                             background-color: #0c2340;
@@ -925,15 +1107,15 @@ document.addEventListener("DOMContentLoaded", function() {
                         .data-table tr:nth-child(even) td {
                             background-color: #f9f9f9;
                         }
-                        .data-table a {
+                        .data-table a { /* Though we remove them, styles are here if any remain */
                             color: #0066cc;
                             text-decoration: none;
                         }
                         .data-table a:hover {
                             text-decoration: underline;
                         }
-                        .newest-transaction td {
-                            background-color: #e6f7ff !important; /* Light blue for newest */
+                        .newest-transaction td { /* Applied to sales, can be for tax too if needed */
+                            background-color: #e6f7ff !important; 
                             font-weight: bold;
                         }
                         .report-footer {
@@ -944,6 +1126,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             color: #777;
                             text-align: center;
                         }
+                       
                     </style>
                 </head>
                 <body>
@@ -967,6 +1150,13 @@ document.addEventListener("DOMContentLoaded", function() {
                     
                     <h2 class="section-title">Sales History</h2>
                     ${salesTableHtml}
+
+                    <div class="trustee-section">
+                        <h2 class="section-title">Trustee Tax Information</h2>
+                        <div id="trustee-tax-info-placeholder">
+                            <p><em>Loading Trustee tax information... Please wait.</em></p>
+                        </div>
+                    </div>
                     
                     <div class="report-footer">
                         Data provided by Shelby County Government. This report is for informational purposes only and is not an official government document.
@@ -977,12 +1167,55 @@ document.addEventListener("DOMContentLoaded", function() {
             
             printWindow.document.open();
             printWindow.document.write(printContent);
-            printWindow.document.close();
+            // DO NOT close the document yet, we need to inject async data
+
+            // Now fetch Trustee data and inject it into the print window
+            const formattedTrusteeParcelIdForPrint = formatParcelIdForTrustee(parcelId); // Use the helper
             
-            // Wait for content to load then print
-            printWindow.onload = function() {
-                printWindow.print();
-            };
+            if (formattedTrusteeParcelIdForPrint) {
+                fetchAndParseTrusteeData(formattedTrusteeParcelIdForPrint).then(trusteeData => {
+                    const placeholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
+                    if (placeholder) {
+                        // Combine owner info, summary, and payment history HTML
+                        let combinedTrusteeHtml = '';
+                        if (trusteeData.trusteeOwnerInfoHtml) {
+                            combinedTrusteeHtml += trusteeData.trusteeOwnerInfoHtml;
+                        }
+                        if (trusteeData.summaryTableHtml) {
+                            combinedTrusteeHtml += trusteeData.summaryTableHtml;
+                        }
+                        if (trusteeData.paymentHistoryHtml) {
+                            combinedTrusteeHtml += trusteeData.paymentHistoryHtml;
+                        }
+                        placeholder.innerHTML = combinedTrusteeHtml || '<p>No tax data returned.</p>'; // Use the combined HTML
+                        
+                        // Re-apply .data-table class to any tables injected from Trustee site
+                        const tablesInTrusteeSection = placeholder.querySelectorAll('table');
+                        tablesInTrusteeSection.forEach(table => {
+                            table.classList.add('data-table');
+                        });
+                    }
+                    printWindow.document.close(); // Close document AFTER async operation completes
+                    // A slight delay helps ensure content is rendered, especially complex tables
+                    setTimeout(() => { printWindow.print(); }, 750); 
+                }).catch(error => {
+                     const placeholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
+                     if (placeholder) {
+                        placeholder.innerHTML = '<p>Failed to load Trustee tax information due to an error.</p>';
+                     }
+                     console.error("Final catch for Trustee data fetch in print:", error);
+                     printWindow.document.close(); // Still close if fetch fails
+                     setTimeout(() => { printWindow.print(); }, 100); 
+                });
+            } else {
+                // If no valid Parcel ID for Trustee, just show a message and proceed to print
+                const placeholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
+                if (placeholder) {
+                    placeholder.innerHTML = '<p>Trustee Parcel ID not available for tax lookup.</p>';
+                }
+                printWindow.document.close();
+                setTimeout(() => { printWindow.print(); }, 100);
+            }
         });
 
         // Handle map clicks to identify parcels

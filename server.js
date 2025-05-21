@@ -4,6 +4,7 @@ const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
+const { exec } = require('child_process'); // Added for curl
 
 const app = express();
 const PORT = process.env.PORT || 901;
@@ -50,6 +51,54 @@ app.post('/api/register-proxy', async (req, res) => {
       details: error.response ? error.response.data : null
     });
   }
+});
+
+// NEW: Proxy endpoint for Shelby County Trustee Tax Info
+app.get('/api/trustee-tax-proxy', async (req, res) => {
+    const parcelIdQuery = req.query.parcelId;
+    if (!parcelIdQuery) {
+        return res.status(400).send('ParcelID query parameter is required');
+    }
+
+    const trusteeUrl = `https://apps.shelbycountytrustee.com/TaxQuery/Inquiry.aspx?ParcelID=${encodeURIComponent(parcelIdQuery)}`;
+    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+
+    // Construct the curl command
+    // Added --insecure to handle potential SSL issues more leniently, similar to how browsers might. Can be removed if not needed.
+    // Added -L to follow redirects
+    const command = `curl -s -L -A "${userAgent}" "${trusteeUrl}" --compressed`;
+
+    try {
+        console.log(`TRUSTEE PROXY (server.js via curl): Requesting data for Parcel ID '${parcelIdQuery}' from ${trusteeUrl}`);
+        
+        exec(command, { timeout: 20000, maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`TRUSTEE PROXY EXEC ERROR (server.js) for Parcel ID '${parcelIdQuery}':`, error.message);
+                console.error(`Curl stderr: ${stderr}`);
+                // Distinguish between different types of errors
+                if (error.killed) {
+                    res.status(504).send('Request to Trustee website timed out (curl proxy).');
+                } else if (stderr.includes('Could not resolve host') || stderr.includes('SSL')) {
+                     res.status(502).send('Bad Gateway: Error connecting to Trustee website (curl proxy - network/SSL issue). Check server logs.');
+                } else {
+                    res.status(500).send('Server error while attempting to proxy request to Trustee website (curl proxy). Check server logs.');
+                }
+                return;
+            }
+
+            if (stdout) {
+                res.send(stdout);
+            } else {
+                console.warn(`TRUSTEE PROXY (server.js via curl): No stdout received for Parcel ID '${parcelIdQuery}', but no error. Stderr: ${stderr}`);
+                res.status(204).send(); // No content, but request was successful
+            }
+        });
+
+    } catch (error) {
+        // This outer catch is less likely to be hit with exec's callback model but kept for safety
+        console.error(`TRUSTEE PROXY GENERIC CATCH ERROR (server.js) for Parcel ID '${parcelIdQuery}':`, error.message);
+        res.status(500).send('Server error while attempting to proxy request to Trustee website (server.js general).');
+    }
 });
 
 // Start the server
