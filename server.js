@@ -101,6 +101,48 @@ app.get('/api/trustee-tax-proxy', async (req, res) => {
     }
 });
 
+// NEW: Proxy endpoint for Shelby County Assessor Property Details
+app.get('/api/assessor-proxy', async (req, res) => {
+    const parcelIdQuery = req.query.parcelId;
+    if (!parcelIdQuery) {
+        return res.status(400).send('ParcelID query parameter is required for Assessor proxy');
+    }
+
+    // The parcelId for the assessor is typically space-separated, e.g., "G0219A D00101"
+    // Ensure it's properly encoded for the URL
+    const assessorUrl = `https://www.assessormelvinburgess.com/propertyDetails?IR=true&parcelid=${encodeURIComponent(parcelIdQuery)}`;
+    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+    const command = `curl -s -L -A "${userAgent}" "${assessorUrl}" --compressed`;
+
+    try {
+        console.log(`ASSESSOR PROXY (server.js via curl): Requesting data for Parcel ID '${parcelIdQuery}' from ${assessorUrl}`);
+        
+        exec(command, { timeout: 20000, maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`ASSESSOR PROXY EXEC ERROR (server.js) for Parcel ID '${parcelIdQuery}':`, error.message);
+                console.error(`Curl stderr for Assessor: ${stderr}`);
+                if (error.killed) {
+                    res.status(504).send('Request to Assessor website timed out (curl proxy).');
+                } else if (stderr.includes('Could not resolve host') || stderr.includes('SSL')) {
+                    res.status(502).send('Bad Gateway: Error connecting to Assessor website (curl proxy - network/SSL issue). Check server logs.');
+                } else {
+                    res.status(500).send('Server error while attempting to proxy request to Assessor website (curl proxy). Check server logs.');
+                }
+                return;
+            }
+            if (stdout) {
+                res.send(stdout);
+            } else {
+                console.warn(`ASSESSOR PROXY (server.js via curl): No stdout received for Parcel ID '${parcelIdQuery}', but no error. Stderr: ${stderr}`);
+                res.status(204).send(); // No content, but request was successful
+            }
+        });
+    } catch (error) {
+        console.error(`ASSESSOR PROXY GENERIC CATCH ERROR (server.js) for Parcel ID '${parcelIdQuery}':`, error.message);
+        res.status(500).send('Server error while attempting to proxy request to Assessor website (server.js general).');
+    }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Proxy server running at http://localhost:${PORT}`);

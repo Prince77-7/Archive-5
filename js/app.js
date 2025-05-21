@@ -942,6 +942,93 @@ document.addEventListener("DOMContentLoaded", function() {
             }
             // --- End Function to fetch and parse Trustee Tax Data ---
 
+            // --- Function to fetch and parse Assessor Data ---
+            async function fetchAndParseAssessorData(parcelIdForAssessor) {
+                console.log("fetchAndParseAssessorData called with:", parcelIdForAssessor);
+                if (!parcelIdForAssessor) {
+                    return { assessorHtml: '<p>Parcel ID not available for Assessor lookup.</p>' };
+                }
+
+                try {
+                    // Assessor parcel ID usually has a space, e.g., "G0219A D00101"
+                    const response = await fetch(`/api/assessor-proxy?parcelId=${encodeURIComponent(parcelIdForAssessor)}`);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error("Error fetching assessor data from proxy:", response.status, errorText);
+                        return { assessorHtml: `<p>Error fetching Assessor data (Status: ${response.status}). ${errorText}</p>` };
+                    }
+
+                    const htmlString = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlString, "text/html");
+
+                    let assessorHtml = '';
+
+                    // Helper function to clone and clean a card section
+                    const getCardHtml = (cardId, headerText) => {
+                        const card = doc.getElementById(cardId);
+                        if (card && card.parentElement) { // Check parentElement for the card container
+                            const cardContainer = card.parentElement; // The div with class "card"
+                            const clonedCard = cardContainer.cloneNode(true);
+                            // Remove interactive elements like data-toggle, etc.
+                            clonedCard.querySelectorAll('[data-toggle="collapse"]').forEach(el => el.removeAttribute('data-toggle'));
+                            clonedCard.querySelectorAll('.collapse').forEach(el => {
+                                el.classList.add('show'); // Ensure content is visible
+                                el.style.display = 'block';
+                            });
+                            // Remove GIS Map View Link and Print button from this section if they exist
+                            clonedCard.querySelectorAll('a[href*="/gis?parcelid="]').forEach(a => a.parentElement.remove());
+                            clonedCard.querySelectorAll('a[href*="/print?parcelid="]').forEach(a => a.parentElement.remove());
+                            clonedCard.querySelectorAll('a[href*="/InformalReview?parcelid="]').forEach(a => a.parentElement.remove());
+                            clonedCard.querySelectorAll('button').forEach(btn => btn.remove());
+                            // Simplify sketch/GIS section (too complex for simple print)
+                            const sketchDiv = clonedCard.querySelector('#sketchdiv');
+                            if(sketchDiv) sketchDiv.innerHTML = '<p>[Building Sketch Area - View on live site]</p>';
+                            const gisDiv = clonedCard.querySelector('#gisSection');
+                             if(gisDiv) gisDiv.innerHTML = '<p>[GIS Map Area - View on live site]</p>';
+                            
+                            // Clean up table styles for better print appearance if needed
+                            clonedCard.querySelectorAll('table').forEach(table => {
+                                table.classList.add('data-table'); // Add our print style class
+                                table.classList.remove('table-borderless'); // Remove bootstrap specific class if it interferes
+                                table.style.width = '100%';
+                            });
+                            // Make sure card header is a simple h5 or similar for print
+                            const cardHeader = clonedCard.querySelector('.card-header .card-title');
+                            if(cardHeader) {
+                                const headerTitle = cardHeader.textContent.trim();
+                                clonedCard.querySelector('.card-header').innerHTML = `<h5>${headerTitle}</h5>`;
+                            } else if (headerText) {
+                                // Fallback if card-title structure is different
+                                 clonedCard.querySelector('.card-header').innerHTML = `<h5>${headerText}</h5>`;
+                            }
+
+                            return clonedCard.outerHTML;
+                        } // Correctly close the if block
+                        return ''; // Fallback return if card isn't found
+                    }; // Correctly close the arrow function
+
+                    // Extract specific sections by their header IDs or a known unique element within them
+                    assessorHtml += getCardHtml("headingOne", "Property Location and Owner Information");
+                    assessorHtml += getCardHtml("headingNine", "Appraisal and Assessment Information");
+                    assessorHtml += getCardHtml("headingThree", "Improvement Details");
+                    assessorHtml += getCardHtml("headingFour", "Other Buildings");
+                    assessorHtml += getCardHtml("headingFive", "Permits");
+                    assessorHtml += getCardHtml("headingSix", "Sales History");
+                    
+                    if (!assessorHtml) {
+                        assessorHtml = '<p>Could not parse Assessor property details. The page structure may have changed.</p>';
+                    }
+
+                    return { assessorHtml };
+
+                } catch (error) {
+                    console.error("Error in fetchAndParseAssessorData:", error);
+                    return { assessorHtml: `<p>Client-side error processing Assessor data: ${error.message}</p>` };
+                }
+            }
+            // --- End Function to fetch and parse Assessor Data ---
+
             // Clone relevant sections for printing to ensure all data is captured
             // We need to be more selective to avoid cloning interactive elements or overly complex structures
             let basicInfoHtml = "";
@@ -1151,6 +1238,13 @@ document.addEventListener("DOMContentLoaded", function() {
                     <h2 class="section-title">Sales History</h2>
                     ${salesTableHtml}
 
+                    <div class="assessor-section">
+                        <h2 class="section-title">Assessor Information</h2>
+                        <div id="assessor-info-placeholder">
+                            <p><em>Loading Assessor information... Please wait.</em></p>
+                        </div>
+                    </div>
+
                     <div class="trustee-section">
                         <h2 class="section-title">Trustee Tax Information</h2>
                         <div id="trustee-tax-info-placeholder">
@@ -1169,53 +1263,45 @@ document.addEventListener("DOMContentLoaded", function() {
             printWindow.document.write(printContent);
             // DO NOT close the document yet, we need to inject async data
 
-            // Now fetch Trustee data and inject it into the print window
-            const formattedTrusteeParcelIdForPrint = formatParcelIdForTrustee(parcelId); // Use the helper
-            
-            if (formattedTrusteeParcelIdForPrint) {
-                fetchAndParseTrusteeData(formattedTrusteeParcelIdForPrint).then(trusteeData => {
-                    const placeholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
-                    if (placeholder) {
-                        // Combine owner info, summary, and payment history HTML
-                        let combinedTrusteeHtml = '';
-                        if (trusteeData.trusteeOwnerInfoHtml) {
-                            combinedTrusteeHtml += trusteeData.trusteeOwnerInfoHtml;
-                        }
-                        if (trusteeData.summaryTableHtml) {
-                            combinedTrusteeHtml += trusteeData.summaryTableHtml;
-                        }
-                        if (trusteeData.paymentHistoryHtml) {
-                            combinedTrusteeHtml += trusteeData.paymentHistoryHtml;
-                        }
-                        placeholder.innerHTML = combinedTrusteeHtml || '<p>No tax data returned.</p>'; // Use the combined HTML
-                        
-                        // Re-apply .data-table class to any tables injected from Trustee site
-                        const tablesInTrusteeSection = placeholder.querySelectorAll('table');
-                        tablesInTrusteeSection.forEach(table => {
-                            table.classList.add('data-table');
-                        });
-                    }
-                    printWindow.document.close(); // Close document AFTER async operation completes
-                    // A slight delay helps ensure content is rendered, especially complex tables
-                    setTimeout(() => { printWindow.print(); }, 750); 
-                }).catch(error => {
-                     const placeholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
-                     if (placeholder) {
-                        placeholder.innerHTML = '<p>Failed to load Trustee tax information due to an error.</p>';
-                     }
-                     console.error("Final catch for Trustee data fetch in print:", error);
-                     printWindow.document.close(); // Still close if fetch fails
-                     setTimeout(() => { printWindow.print(); }, 100); 
-                });
-            } else {
-                // If no valid Parcel ID for Trustee, just show a message and proceed to print
-                const placeholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
-                if (placeholder) {
-                    placeholder.innerHTML = '<p>Trustee Parcel ID not available for tax lookup.</p>';
+            const parcelIdForLinks = getText("parcel-id"); // Get the standard parcel ID for this
+            const formattedTrusteeParcelIdForPrint = formatParcelIdForTrustee(parcelIdForLinks);
+
+            Promise.all([
+                formattedTrusteeParcelIdForPrint ? fetchAndParseTrusteeData(formattedTrusteeParcelIdForPrint) : Promise.resolve({ trusteeOwnerInfoHtml: '<p>Trustee Parcel ID not available.</p>', summaryTableHtml: '', paymentHistoryHtml: '' }),
+                parcelIdForLinks ? fetchAndParseAssessorData(parcelIdForLinks) : Promise.resolve({ assessorHtml: '<p>Parcel ID not available for Assessor lookup.</p>' })
+            ]).then(([trusteeData, assessorData]) => {
+                const trusteePlaceholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
+                if (trusteePlaceholder) {
+                    let combinedTrusteeHtml = '';
+                    if (trusteeData.trusteeOwnerInfoHtml) combinedTrusteeHtml += trusteeData.trusteeOwnerInfoHtml;
+                    if (trusteeData.summaryTableHtml) combinedTrusteeHtml += trusteeData.summaryTableHtml;
+                    if (trusteeData.paymentHistoryHtml) combinedTrusteeHtml += trusteeData.paymentHistoryHtml;
+                    trusteePlaceholder.innerHTML = combinedTrusteeHtml || '<p>No Trustee tax data returned.</p>';
+                    trusteePlaceholder.querySelectorAll('table').forEach(table => table.classList.add('data-table'));
                 }
+
+                const assessorPlaceholder = printWindow.document.getElementById('assessor-info-placeholder');
+                if (assessorPlaceholder) {
+                    assessorPlaceholder.innerHTML = assessorData.assessorHtml || '<p>No Assessor data returned.</p>';
+                    // Re-apply .data-table class to any tables injected from Assessor site
+                    assessorPlaceholder.querySelectorAll('table').forEach(table => {
+                        table.classList.add('data-table');
+                        table.classList.remove('table-borderless');
+                    });
+                }
+
+                printWindow.document.close();
+                setTimeout(() => { printWindow.print(); }, 1000); // Increased timeout slightly for more content
+            }).catch(error => {
+                console.error("Error fetching data for print report:", error);
+                const trusteePlaceholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
+                if (trusteePlaceholder) trusteePlaceholder.innerHTML = '<p>Failed to load Trustee tax information.</p>';
+                const assessorPlaceholder = printWindow.document.getElementById('assessor-info-placeholder');
+                if (assessorPlaceholder) assessorPlaceholder.innerHTML = '<p>Failed to load Assessor information.</p>';
+                
                 printWindow.document.close();
                 setTimeout(() => { printWindow.print(); }, 100);
-            }
+            });
         });
 
         // Handle map clicks to identify parcels
@@ -2633,8 +2719,8 @@ function loadSavedDatasets() {
                 }
             });
         }
-    });
-});
+    }); // Correct closing for require callback
+}); // Correct closing for document.addEventListener callback
 
 // Event Listener for the Owner Name Search
 const ownerNameSearchButton = document.getElementById("owner-name-search-button");
