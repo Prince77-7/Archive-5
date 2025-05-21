@@ -268,6 +268,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 parcelTabs.classList.remove("hidden");
                 reportContainer.classList.remove("hidden");
                 instructions.classList.add("hidden");
+
+                // Scroll to the parcel information section
+                const parcelInfoSection = document.getElementById('parcel-info');
+                if (parcelInfoSection) {
+                    parcelInfoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
                 
                 // Highlight the property on the map if geometry is provided
                 if (geometry) {
@@ -835,6 +841,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     
                     if (result) {
                         displayParcelInfo(result.feature.attributes, result.feature.geometry);
+                        // The scroll will be handled by displayParcelInfo
                     } else {
                         // No parcel found
                         parcelDetails.classList.add("hidden");
@@ -890,6 +897,9 @@ document.addEventListener("DOMContentLoaded", function() {
             parcelDetails.classList.add("hidden");
             parcelTabs.classList.add("hidden");
             reportContainer.classList.add("hidden");
+            // Clear any existing owner property list if a new search is initiated
+            const ownerPropertyList = document.getElementById("owner-property-list-container");
+            if (ownerPropertyList) ownerPropertyList.innerHTML = '';
             
             // Create a query for properties with this owner
             const query = parcelLayer.createQuery();
@@ -1020,6 +1030,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         } else {
                             // If only one property, display its details
                             displayParcelInfo(results.features[0].attributes, results.features[0].geometry);
+                            // The scroll will be handled by displayParcelInfo
                         }
                     } else {
                         // No properties found for this owner
