@@ -1152,16 +1152,13 @@ document.addEventListener("DOMContentLoaded", function() {
             
             // Fetch all data (including Google Maps images/info) before constructing the print content
             Promise.all([
-                // Assuming googleMapsService.js functions are available in the global scope
-                // or app.js is treated as a module and can import them.
-                // For simplicity here, we'll call them directly as if they are globally available.
                 fetchStaticAerialImageUrl(address, GOOGLE_MAPS_API_KEY),
                 fetchStreetViewImageUrl(address, GOOGLE_MAPS_API_KEY),
-                fetchCinematicAerialInfo(address, GOOGLE_MAPS_API_KEY),
+                // fetchCinematicAerialInfo(address, GOOGLE_MAPS_API_KEY), // Removed for now
                 fetchAndParseTrusteeData(formatParcelIdForTrustee(parcelId)),
                 fetchAndParseAssessorData(parcelId),
                 fetchAndParseMemphisTaxData(parcelId)
-            ]).then(([staticAerialData, streetViewData, cinematicAerialData, trusteeData, assessorData, memphisData]) => {
+            ]).then(([staticAerialData, streetViewData, trusteeData, assessorData, memphisData]) => { // Removed cinematicAerialData from destructured array
                 
                 let staticAerialHtml = '';
                 if (staticAerialData && staticAerialData.imageUri) {
@@ -1176,25 +1173,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 } else {
                     streetViewHtml = `<p class=\"google-map-error\">Street View not available: ${streetViewData?.error || 'Unknown error'}</p>`;
                 }
-
-                let cinematicAerialImageHtml = '';
-                let cinematicAerialVideoLinkHtml = '';
-
-                if (cinematicAerialData) {
-                    if (cinematicAerialData.imageUri) {
-                        cinematicAerialImageHtml = `<img class=\"google-map-media\" src=\"${cinematicAerialData.imageUri}\" alt=\"Cinematic Aerial Snapshot of ${address}\">`;
-                    } else {
-                        cinematicAerialImageHtml = `<p class=\"google-map-error\">Cinematic Aerial snapshot not available: ${cinematicAerialData.error || 'Video/image not found or error.'} </p>`;
-                    }
-                    if (cinematicAerialData.videoUri) {
-                        cinematicAerialVideoLinkHtml = `<p class=\"google-map-videolink\"><a href=\"${cinematicAerialData.videoUri}\" target=\"_blank\">View Cinematic Aerial Video (opens in new tab)</a></p>`;
-                    } else if (!cinematicAerialData.imageUri) { // Only show this if there was also no image
-                        cinematicAerialVideoLinkHtml = `<p class=\"google-map-error\">Cinematic Aerial video not available.</p>`;
-                    }
-                } else {
-                    cinematicAerialImageHtml = `<p class=\"google-map-error\">Cinematic Aerial data could not be retrieved.</p>`;
-                }
-
 
                 const printContent = `
                 <!DOCTYPE html>
@@ -1329,12 +1307,6 @@ document.addEventListener("DOMContentLoaded", function() {
                         ${streetViewHtml}
                     </div>
 
-                    <h2 class="section-title">Cinematic Aerial (if available)</h2>
-                    <div class="google-map-image-container">
-                        ${cinematicAerialImageHtml}
-                        ${cinematicAerialVideoLinkHtml}
-                    </div>
-                    
                     <h2 class="section-title">Detailed Information</h2>
                     ${basicInfoHtml}
                     
@@ -2805,6 +2777,34 @@ function loadSavedDatasets() {
             });
         }
     }); // Correct closing for require callback
+
+    // Event Listener for the Clear Cache Button (Outside ArcGIS require callback)
+    const clearCacheButton = document.getElementById("clear-cache-button");
+    if (clearCacheButton) {
+        clearCacheButton.addEventListener("click", function() {
+            console.log("Clear Cache & Reload button clicked.");
+            try {
+                // Clear localStorage (favorites, saved datasets)
+                localStorage.clear();
+                console.log("localStorage cleared.");
+
+                // Clear sessionStorage (if anything is stored there)
+                sessionStorage.clear();
+                console.log("sessionStorage cleared.");
+
+                // Optionally, inform the user
+                alert("Application data (favorites, saved datasets) cleared. The page will now reload.");
+
+                // Perform a hard reload
+                location.reload(true);
+
+            } catch (e) {
+                console.error("Error during cache clearing or reload:", e);
+                alert("An error occurred while trying to clear data. Please try manually clearing your browser cache.");
+            }
+        });
+    }
+
 }); // Correct closing for document.addEventListener callback
 
 // Event Listener for the Owner Name Search
