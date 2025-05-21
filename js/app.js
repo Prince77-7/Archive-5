@@ -759,55 +759,216 @@ document.addEventListener("DOMContentLoaded", function() {
         printButton.addEventListener("click", function() {
             const printWindow = window.open("", "_blank");
             
-            // Get current parcel data
-            const parcelId = document.getElementById("parcel-id").textContent;
-            const owner = document.getElementById("owner-name").textContent;
-            const address = document.getElementById("parcel-address").textContent;
+            // Get current parcel data dynamically
+            const parcelId = document.getElementById("parcel-id")?.textContent || "N/A";
+            const owner = document.getElementById("owner-name")?.textContent || "N/A";
+            const address = document.getElementById("parcel-address")?.textContent || "N/A";
+            const lastSalePrice = document.getElementById("last-sale-price")?.textContent || "N/A";
+            const mapNumber = document.getElementById("parcel-map")?.textContent || "N/A";
+            const zipCode = document.getElementById("parcel-zip")?.textContent || "N/A";
+
+            // Function to safely get text content from an element by ID
+            const getText = (id) => document.getElementById(id)?.textContent || "N/A";
+
+            // Clone relevant sections for printing to ensure all data is captured
+            // We need to be more selective to avoid cloning interactive elements or overly complex structures
+            let basicInfoHtml = "";
+            const basicInfoElements = [
+                // Property Info
+                { label: "Parcel ID", id: "parcel-id" }, { label: "Last Sale Price", id: "last-sale-price" },
+                { label: "Map", id: "parcel-map" }, { label: "Address", id: "parcel-address" },
+                { label: "ZIP", id: "parcel-zip" }, { label: "Alt ID", id: "parcel-alt-id" },
+                { label: "Trustee ID", id: "trustee-id" }, { label: "Subdivision", id: "subdivision" },
+                { label: "Lot", id: "sub-lot" }, { label: "Acres", id: "parcel-acres" },
+                { label: "Calculated SqFt", id: "parcel-sqft" },
+                // Owner Info
+                { label: "Owner Name", id: "owner-name" }, { label: "Additional Owner", id: "owner-ext" },
+                { label: "Mailing Address", id: "owner-address" }, { label: "City, State ZIP", id: "owner-city-state-zip" },
+                { label: "Owner Notes", id: "owner-notes" },
+                // Valuation Info
+                { label: "Current Land Value", id: "current-land-value" }, { label: "Current Building Value", id: "current-bldg-value" },
+                { label: "Current Total Value", id: "current-total-value" }, { label: "Current Assessed Value", id: "current-assessed-value" },
+                // Assessment Info
+                { label: "Neighborhood", id: "neighborhood" }, { label: "Land Use Code", id: "land-use" },
+                { label: "Land Use Desc", id: "land-use-desc" }, { label: "Property Class", id: "property-class" },
+                { label: "Zoning", id: "zoning" }, { label: "Jurisdiction", id: "jurisdiction" },
+                { label: "Living Units", id: "living-units" },
+                // Building Characteristics
+                { label: "Year Built", id: "year-built" }, { label: "Stories", id: "stories" },
+                { label: "Exterior Wall", id: "ext-wall" }, { label: "Total Rooms", id: "total-rooms" },
+                { label: "Bedrooms", id: "bedrooms" }, { label: "Full Baths", id: "full-baths" },
+                { label: "Half Baths", id: "half-baths" }, { label: "Basement", id: "basement-type" },
+                { label: "Heating", id: "heating" }, { label: "Parking", id: "parking-type" },
+            ];
+
+            let currentSection = "";
+            basicInfoElements.forEach(el => {
+                const value = getText(el.id);
+                let sectionTitle = "";
+                if (["Parcel ID", "Owner Name", "Current Land Value", "Neighborhood", "Year Built"].includes(el.label)) {
+                    if (el.label === "Parcel ID") sectionTitle = "Property Information";
+                    else if (el.label === "Owner Name") sectionTitle = "Owner Information";
+                    else if (el.label === "Current Land Value") sectionTitle = "Valuation Information";
+                    else if (el.label === "Neighborhood") sectionTitle = "Assessment Information";
+                    else if (el.label === "Year Built") sectionTitle = "Building Characteristics";
+                    
+                    if (sectionTitle !== currentSection) {
+                        if (currentSection !== "") basicInfoHtml += `</div>`; // Close previous section-grid
+                        basicInfoHtml += `<h3>${sectionTitle}</h3><div class="section-grid">`;
+                        currentSection = sectionTitle;
+                    }
+                }
+                basicInfoHtml += `<div class="info-item"><span class="label">${el.label}:</span> <span class="value">${value}</span></div>`;
+            });
+            if (currentSection !== "") basicInfoHtml += `</div>`; // Close the last section-grid
+
+            const salesTableHtml = document.getElementById("sales-table-container")?.innerHTML || "<p>Sales history not available.</p>";
             
-            // Create print content
+            // Create print content with enhanced styling
             const printContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>Property Report: ${parcelId}</title>
                     <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        h1 { color: #0c2340; font-size: 24px; }
-                        h2 { color: #0c2340; font-size: 18px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-                        .info-group { margin-bottom: 20px; }
-                        .info-row { margin: 5px 0; }
-                        .label { font-weight: bold; display: inline-block; width: 150px; }
-                        .print-header { display: flex; justify-content: space-between; align-items: center; }
-                        .print-date { font-size: 12px; color: #666; }
-                        .print-footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
+                        @media print {
+                            body {
+                                -webkit-print-color-adjust: exact; /* Chrome, Safari */
+                                color-adjust: exact; /* Firefox */
+                            }
+                        }
+                        body {
+                            font-family: 'Arial', sans-serif;
+                            margin: 20px;
+                            color: #333;
+                            line-height: 1.6;
+                        }
+                        .report-header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            padding-bottom: 15px;
+                            border-bottom: 2px solid #0c2340;
+                        }
+                        .report-header h1 {
+                            font-size: 26px;
+                            color: #0c2340;
+                            margin: 0 0 5px 0;
+                            font-weight: 600;
+                        }
+                        .report-header p {
+                            font-size: 14px;
+                            color: #555;
+                            margin: 0;
+                        }
+                        .section-title {
+                            font-size: 20px;
+                            color: #0c2340;
+                            border-bottom: 1px solid #ccc;
+                            padding-bottom: 8px;
+                            margin-top: 25px;
+                            margin-bottom: 15px;
+                            font-weight: 600;
+                        }
+                        .info-group h3 { /* For cloned basic info sections */
+                            font-size: 18px;
+                            color: #1a3a5f;
+                            margin-top: 20px;
+                            margin-bottom: 10px;
+                            padding-bottom: 5px;
+                            border-bottom: 1px dashed #ddd;
+                            font-weight: 500;
+                        }
+                        .section-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                            gap: 10px 20px; /* row-gap column-gap */
+                            margin-bottom: 20px;
+                        }
+                        .info-item {
+                            display: flex;
+                            font-size: 14px;
+                            padding: 5px 0;
+                            border-bottom: 1px dotted #eee;
+                        }
+                        .info-item:last-child {
+                            border-bottom: none;
+                        }
+                        .info-item .label {
+                            font-weight: 600;
+                            color: #444;
+                            min-width: 150px; /* Adjust as needed */
+                            margin-right: 10px;
+                        }
+                        .info-item .value {
+                            color: #111;
+                            word-break: break-word;
+                        }
+                        /* Sales Table Styles */
+                        #sales-table-container {
+                            margin-top: 10px;
+                        }
+                        .data-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 13px;
+                        }
+                        .data-table th, .data-table td {
+                            border: 1px solid #ddd;
+                            padding: 10px;
+                            text-align: left;
+                        }
+                        .data-table th {
+                            background-color: #0c2340;
+                            color: white;
+                            font-weight: 600;
+                        }
+                        .data-table tr:nth-child(even) td {
+                            background-color: #f9f9f9;
+                        }
+                        .data-table a {
+                            color: #0066cc;
+                            text-decoration: none;
+                        }
+                        .data-table a:hover {
+                            text-decoration: underline;
+                        }
+                        .newest-transaction td {
+                            background-color: #e6f7ff !important; /* Light blue for newest */
+                            font-weight: bold;
+                        }
+                        .report-footer {
+                            margin-top: 40px;
+                            padding-top: 15px;
+                            border-top: 1px solid #ccc;
+                            font-size: 12px;
+                            color: #777;
+                            text-align: center;
+                        }
                     </style>
                 </head>
                 <body>
-                    <div class="print-header">
+                    <div class="report-header">
                         <h1>Shelby County Property Report</h1>
-                        <div class="print-date">Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
+                        <p>Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
                     </div>
                     
-                    <div class="info-group">
-                        <h2>Property Summary</h2>
-                        <div class="info-row"><span class="label">Parcel ID:</span> ${parcelId}</div>
-                        <div class="info-row"><span class="label">Owner:</span> ${owner}</div>
-                        <div class="info-row"><span class="label">Property Address:</span> ${address}</div>
+                    <h2 class="section-title">Property Summary</h2>
+                    <div class="section-grid">
+                        <div class="info-item"><span class="label">Parcel ID:</span> <span class="value">${parcelId}</span></div>
+                        <div class="info-item"><span class="label">Owner:</span> <span class="value">${owner}</span></div>
+                        <div class="info-item"><span class="label">Property Address:</span> <span class="value">${address}</span></div>
+                        <div class="info-item"><span class="label">Map Number:</span> <span class="value">${mapNumber}</span></div>
+                        <div class="info-item"><span class="label">ZIP Code:</span> <span class="value">${zipCode}</span></div>
+                        <div class="info-item"><span class="label">Last Sale Price:</span> <span class="value">${lastSalePrice}</span></div>
                     </div>
                     
-                    <div class="info-group">
-                        <h2>Detailed Information</h2>
-                        <!-- Clone the basic info tab content -->
-                        ${document.getElementById("basic-info").innerHTML}
-                    </div>
+                    <h2 class="section-title">Detailed Information</h2>
+                    ${basicInfoHtml}
                     
-                    <div class="info-group">
-                        <h2>Sales History</h2>
-                        <!-- Clone the sales table -->
-                        ${document.getElementById("sales-table-container").innerHTML}
-                    </div>
+                    <h2 class="section-title">Sales History</h2>
+                    ${salesTableHtml}
                     
-                    <div class="print-footer">
+                    <div class="report-footer">
                         Data provided by Shelby County Government. This report is for informational purposes only and is not an official government document.
                     </div>
                 </body>
