@@ -236,6 +236,9 @@ document.addEventListener("DOMContentLoaded", function() {
         const deleteSavedDatasetButton = document.getElementById("delete-saved-dataset-button");
         const savedDatasetsStatus = document.getElementById("saved-datasets-status");
 
+        // Initial load of saved datasets
+        loadSavedDatasets();
+
         // Set up tab navigation
         tabButtons.forEach(button => {
             button.addEventListener("click", () => {
@@ -2106,6 +2109,99 @@ function loadSavedDatasets() {
         // Markers are now only shown when the panel is opened
 
         // --- End Geocoding and Processing Uploaded File ---
+
+        // Event Listener for Load Saved Dataset Button
+        if (loadSavedDatasetButton && savedDatasetsSelect) {
+            loadSavedDatasetButton.addEventListener('click', () => {
+                const selectedKey = savedDatasetsSelect.value;
+                if (!selectedKey) {
+                    savedDatasetsStatus.textContent = 'Please select a dataset to load.';
+                    savedDatasetsStatus.style.color = 'orange';
+                    return;
+                }
+
+                try {
+                    const jsonData = localStorage.getItem(selectedKey);
+                    if (jsonData) {
+                        const savedData = JSON.parse(jsonData);
+                        
+                        // Clear existing displayed data before loading new set
+                        uploadPropertyListContainer.innerHTML = ''; // Clear property list in sidebar
+                        csvUploadGraphicsLayer.removeAll(); // Clear existing markers from map
+                        highlightGraphicsLayer.removeAll(); // Clear any highlights
+                        
+                        if (savedData && savedData.length > 0) {
+                            // Convert plain mapPoint objects back to Esri Point objects
+                            const processedSavedData = savedData.map(item => {
+                                if (item.mapPoint && typeof item.mapPoint.x === 'number' && typeof item.mapPoint.y === 'number') {
+                                    // Use the spatialReference from the stored point if available, otherwise default to view's SR
+                                    const sr = item.mapPoint.spatialReference || view.spatialReference;
+                                    return {
+                                        ...item,
+                                        mapPoint: new Point({ x: item.mapPoint.x, y: item.mapPoint.y, spatialReference: sr })
+                                    };
+                                }
+                                return item; // Return item as-is if mapPoint is missing or not a simple point object
+                            });
+
+                            displayProcessedResults(processedSavedData); // This should re-add markers and list
+                            savedDatasetsStatus.textContent = `Dataset "${selectedKey.substring('processedDataset_'.length)}" loaded.`;
+                            savedDatasetsStatus.style.color = 'green';
+
+                            // Ensure the map view adjusts to the loaded data
+                            // The pointsForExtent will now correctly use the Esri Point objects from processedSavedData
+                            if (view && processedSavedData.length > 0) {
+                                const pointsForExtent = processedSavedData
+                                    .map(item => item.mapPoint) // Get the mapPoint which is now an Esri Point
+                                    .filter(point => point instanceof Point); // Filter out any nulls or non-Points
+
+                                if (pointsForExtent.length > 0) {
+                                    view.goTo(pointsForExtent).catch(error => {
+                                        console.error("Error zooming to loaded dataset extent:", error);
+                                    });
+                                }
+                            }
+
+                        } else {
+                            savedDatasetsStatus.textContent = 'Selected dataset is empty or invalid.';
+                            savedDatasetsStatus.style.color = 'red';
+                        }
+                    } else {
+                        savedDatasetsStatus.textContent = 'Could not retrieve data for the selected dataset.';
+                        savedDatasetsStatus.style.color = 'red';
+                    }
+                } catch (error) {
+                    console.error("Error loading saved dataset:", error);
+                    savedDatasetsStatus.textContent = 'Error loading dataset. Check console for details.';
+                    savedDatasetsStatus.style.color = 'red';
+                    alert(`Error loading dataset: ${error.message}`);
+                }
+            });
+        }
+
+        // Event Listener for Delete Saved Dataset Button
+        if (deleteSavedDatasetButton && savedDatasetsSelect) {
+            deleteSavedDatasetButton.addEventListener('click', () => {
+                const selectedKey = savedDatasetsSelect.value;
+                if (!selectedKey) {
+                    savedDatasetsStatus.textContent = 'Please select a dataset to delete.';
+                    savedDatasetsStatus.style.color = 'orange';
+                    return;
+                }
+
+                try {
+                    localStorage.removeItem(selectedKey);
+                    savedDatasetsStatus.textContent = 'Dataset deleted successfully.';
+                    savedDatasetsStatus.style.color = 'green';
+                    loadSavedDatasets(); // Refresh the list of saved datasets
+                } catch (error) {
+                    console.error("Error deleting dataset:", error);
+                    savedDatasetsStatus.textContent = 'Error deleting dataset. Check console for details.';
+                    savedDatasetsStatus.style.color = 'red';
+                    alert(`Error deleting dataset: ${error.message}`);
+                }
+            });
+        }
     });
 });
 

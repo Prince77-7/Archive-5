@@ -45,13 +45,13 @@
                         <div id="saved-datasets-section" class="info-group" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #444;">
                             <h4>Load Saved Dataset</h4>
                             <p>Load a previously processed dataset from your browser's storage.</p>
-                            <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-                                <select id="saved-datasets-select" style="flex-grow: 1;">
+                            <div style="display: flex; flex-direction: column; gap: 10px; align-items: stretch; margin-top: 10px;">
+                                <select id="saved-datasets-select" style="flex-grow: 1; margin-bottom: 8px;">
                                     <option value="">-- Select a saved dataset --</option>
                                     <!-- Options will be populated by JavaScript -->
                                 </select>
-                                <button id="load-saved-dataset-button" class="action-button" title="Load selected dataset">Load</button>
-                                <button id="delete-saved-dataset-button" class="action-button danger-button" title="Delete selected dataset">Delete</button>
+                                <button id="load-saved-dataset-button" class="action-button" title="Load selected dataset" style="width: 100%; margin-bottom: 5px;">Load</button>
+                                <button id="delete-saved-dataset-button" class="action-button danger-button" title="Delete selected dataset" style="width: 100%;">Delete</button>
                             </div>
                             <div id="saved-datasets-status" style="margin-top: 5px; font-size: 0.9em; font-style: italic;"></div>
                         </div>
