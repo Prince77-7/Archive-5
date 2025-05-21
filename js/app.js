@@ -222,6 +222,10 @@ document.addEventListener("DOMContentLoaded", function() {
         const propertyListContainerDiv = document.getElementById("property-list-container"); // Reference to manual search results
         const downloadResultsCsvButton = document.getElementById("download-results-csv"); // Reference for the new download button
 
+        // Custom File Input Elements
+        const customFileBrowseButton = document.getElementById("custom-file-browse-button");
+        const fileNameDisplay = document.getElementById("file-name-display");
+
         // Favorites UI Elements
         const favoriteButton = document.getElementById("favorite-button");
         const showFavoritesButton = document.getElementById("show-favorites-button");
@@ -1125,7 +1129,29 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         
         // --- File Upload Handling ---
-        fileInput.addEventListener('change', handleFileSelect);
+        // Link custom browse button to actual file input
+        if (customFileBrowseButton && fileInput) {
+            customFileBrowseButton.addEventListener('click', () => {
+                fileInput.click(); // Programmatically click the hidden file input
+            });
+        }
+
+        // Update displayed file name when a file is selected
+        if (fileInput && fileNameDisplay) {
+            fileInput.addEventListener('change', (event) => {
+                if (event.target.files && event.target.files.length > 0) {
+                    fileNameDisplay.textContent = event.target.files[0].name;
+                } else {
+                    fileNameDisplay.textContent = 'No file selected';
+                }
+                // Call the original handleFileSelect to process the file
+                handleFileSelect(event);
+            });
+        }
+        // Remove the original event listener for fileInput to avoid double handling if handleFileSelect is also called directly
+        // fileInput.addEventListener('change', handleFileSelect); 
+        // The call to handleFileSelect is now inside the new change listener above.
+
         processFileButton.addEventListener('click', processUploadedFile); // Add listener
 
         function handleFileSelect(event) {

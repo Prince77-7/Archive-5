@@ -1388,3 +1388,91 @@ footer {
         padding: 6px 12px;
     }
 }
+
+/* Custom Select Dropdown Styles */
+select {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 10px 12px;
+    border-radius: var(--border-radius-md);
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    cursor: pointer;
+    width: 100%; /* Ensure it takes full width where applicable */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+select:hover {
+    border-color: var(--accent-color);
+}
+
+select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px var(--accent-muted);
+}
+
+/* Custom File Input (Browse Button) Styles */
+.custom-file-input-container {
+    position: relative;
+    display: inline-block; /* Or block if you want it full width */
+    width: 100%; /* Make container full width */
+    margin-bottom: 10px; /* Add some space below */
+}
+
+.custom-file-input-container input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0; /* Make the default input invisible */
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.custom-file-browse-button {
+    /* Re-use action-button styles and add specifics */
+    padding: 10px 20px; /* Standard padding from action-button */
+    background-color: var(--accent-color); /* Standard background */
+    background-image: var(--accent-gradient);
+    color: var(--bg-color); /* Standard text color */
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all var(--transition-medium) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(77, 171, 247, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: inline-block; /* So it doesn't take full width unless specified by container */
+    text-align: center;
+    width: 100%; /* Make button full width by default */
+    box-sizing: border-box;
+    outline: none;
+}
+
+.custom-file-browse-button:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(77, 171, 247, 0.4), 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.custom-file-browse-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(77, 171, 247, 0.3);
+}
+
+.file-name-display {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: left; /* Align text to the left */
+    padding: 8px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

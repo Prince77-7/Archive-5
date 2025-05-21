@@ -59,7 +59,13 @@
 
                         <h3>Upload Property List</h3>
                         <p>Upload a CSV or Excel file with property addresses.</p>
-                        <input type="file" id="file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                        
+                        <div class="custom-file-input-container">
+                            <input type="file" id="file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                            <button type="button" id="custom-file-browse-button" class="custom-file-browse-button">Browse Files</button>
+                            <span id="file-name-display" class="file-name-display">No file selected</span>
+                        </div>
+
                         <div id="column-selection" class="hidden" style="margin-top: 10px;">
                             <label for="address-column-select">Select Address Column:</label>
                             <select id="address-column-select" style="width: 100%; margin-bottom: 10px;"></select>
