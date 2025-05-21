@@ -5,6 +5,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { exec } = require('child_process'); // Added for curl
+const https = require('https'); // Added for custom agent
+const constants = require('constants'); // Added for SSL options
 
 const app = express();
 const PORT = process.env.PORT || 901;
@@ -61,42 +63,50 @@ app.get('/api/trustee-tax-proxy', async (req, res) => {
     }
 
     const trusteeUrl = `https://apps.shelbycountytrustee.com/TaxQuery/Inquiry.aspx?ParcelID=${encodeURIComponent(parcelIdQuery)}`;
-    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
-
-    // Construct the curl command
-    // Simplified: -v for verbose, --fail for server errors, -s for silent (progress), -L for redirects, --insecure for SSL leniency.
-    const command = `curl -v --fail -s -L --insecure -A "${userAgent}" "${trusteeUrl}" --compressed`;
+    
+    // Create a custom HTTPS agent to allow unsafe legacy renegotiation
+    const customAgent = new https.Agent({
+        secureOptions: constants.SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION | constants.SSL_OP_LEGACY_SERVER_CONNECT
+    });
 
     try {
-        console.log(`TRUSTEE PROXY (server.js via curl - simplified): Requesting data for Parcel ID '${parcelIdQuery}' from ${trusteeUrl}`);
+        console.log(`TRUSTEE PROXY (server.js via axios with custom agent): Requesting data for Parcel ID '${parcelIdQuery}' from ${trusteeUrl}`);
         
-        exec(command, { timeout: 20000, maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`TRUSTEE PROXY EXEC ERROR (server.js) for Parcel ID '${parcelIdQuery}':`, error.message);
-                console.error(`Curl stderr: ${stderr}`);
-                // Distinguish between different types of errors
-                if (error.killed) {
-                    res.status(504).send('Request to Trustee website timed out (curl proxy).');
-                } else if (stderr.includes('Could not resolve host') || stderr.includes('SSL')) {
-                     res.status(502).send('Bad Gateway: Error connecting to Trustee website (curl proxy - network/SSL issue). Check server logs.');
-                } else {
-                    res.status(500).send('Server error while attempting to proxy request to Trustee website (curl proxy). Check server logs.');
-                }
-                return;
-            }
-
-            if (stdout) {
-                res.send(stdout);
-            } else {
-                console.warn(`TRUSTEE PROXY (server.js via curl): No stdout received for Parcel ID '${parcelIdQuery}', but no error. Stderr: ${stderr}`);
-                res.status(204).send(); // No content, but request was successful
-            }
+        const response = await axios.get(trusteeUrl, {
+            httpsAgent: customAgent,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Connection': 'keep-alive',
+                // 'Referer': 'https://apps.shelbycountytrustee.com/' // Optional, can add if needed
+            },
+            timeout: 20000 // 20 second timeout
         });
-
+        res.send(response.data);
     } catch (error) {
-        // This outer catch is less likely to be hit with exec's callback model but kept for safety
-        console.error(`TRUSTEE PROXY GENERIC CATCH ERROR (server.js) for Parcel ID '${parcelIdQuery}':`, error.message);
-        res.status(500).send('Server error while attempting to proxy request to Trustee website (server.js general).');
+        console.error(`TRUSTEE PROXY AXIOS ERROR (server.js) for Parcel ID '${parcelIdQuery}':`);
+        if (error.response) {
+            console.error('Error Status:', error.response.status);
+            console.error('Error Headers:', error.response.headers);
+            // console.error('Error Data:', error.response.data); // Could be a lot of HTML
+            res.status(error.response.status).send(`Error fetching data from Trustee website (Status: ${error.response.status}). Check server logs for details.`);
+        } else if (error.request) {
+            // This part now more likely covers SSL errors or network issues if OpenSSL still blocks it
+            console.error('Error Request: No response or connection error.', error.message); // error.message will contain the SSL error like 'unsafe legacy renegotiation disabled' if it still occurs at OpenSSL level
+            if (error.message && error.message.includes('unsafe legacy renegotiation disabled')) {
+                res.status(502).send('SSL Error: Unsafe legacy renegotiation disabled. Connection to Trustee failed.');
+            } else if (error.code === 'ECONNREFUSED'){
+                res.status(503).send('Connection Refused by Trustee website.');
+            } else if (error.code === 'ETIMEDOUT') {
+                 res.status(504).send('Request to Trustee website timed out.');
+            } else {
+                res.status(503).send(`Service Unavailable: No response or connection error with Trustee website. (${error.message})`);
+            }
+        } else {
+            console.error('Generic Error (server.js axios trustee):', error.message);
+            res.status(500).send('Server error while attempting to proxy request to Trustee website (axios). ');
+        }
     }
 });
 
