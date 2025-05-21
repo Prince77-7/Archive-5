@@ -65,7 +65,8 @@ app.get('/api/trustee-tax-proxy', async (req, res) => {
 
     // Construct the curl command
     // Added -v for verbose output to stderr, and --fail to error on HTTP server errors.
-    const command = `curl -v --fail -s -L -A "${userAgent}" "${trusteeUrl}" --compressed`;
+    // Added --tlsv1.2 to force TLS 1.2 and --ciphers DEFAULT@SECLEVEL=1 for broader cipher compatibility.
+    const command = `curl -v --fail -s -L --tlsv1.2 --ciphers DEFAULT@SECLEVEL=1 -A "${userAgent}" "${trusteeUrl}" --compressed`;
 
     try {
         console.log(`TRUSTEE PROXY (server.js via curl): Requesting data for Parcel ID '${parcelIdQuery}' from ${trusteeUrl}`);
