@@ -800,14 +800,18 @@ document.addEventListener("DOMContentLoaded", function() {
             const parcelId = document.getElementById("parcel-id")?.textContent || "N/A";
             const owner = document.getElementById("owner-name")?.textContent || "N/A";
             const address = document.getElementById("parcel-address")?.textContent || "N/A";
+            console.log("Address being used for printing/Google APIs:", address);
             const lastSalePrice = document.getElementById("last-sale-price")?.textContent || "N/A";
             const mapNumber = document.getElementById("parcel-map")?.textContent || "N/A";
             const zipCode = document.getElementById("parcel-zip")?.textContent || "N/A";
 
+            // API Key for Google Maps Platform (ensure this is the correct key with all necessary APIs enabled)
+            const GOOGLE_MAPS_API_KEY = 'AIzaSyBRMr4lx7La3yHAomGQRlcUZ9e_djxGt1E'; 
+
             // Function to safely get text content from an element by ID
             const getText = (id) => document.getElementById(id)?.textContent || "N/A";
 
-            // --- Function to fetch and parse Trustee Tax Data ---
+            // --- Functions for Trustee, Assessor, Memphis Tax data remain here as they are specific to this app's data sources ---
             async function fetchAndParseTrusteeData(parcelIdForTrustee) {
                 console.log("fetchAndParseTrusteeData called with:", parcelIdForTrustee);
                 if (!parcelIdForTrustee) {
@@ -1094,7 +1098,6 @@ document.addEventListener("DOMContentLoaded", function() {
             // --- End Function to fetch and parse City of Memphis Tax Data ---
 
             // Clone relevant sections for printing to ensure all data is captured
-            // We need to be more selective to avoid cloning interactive elements or overly complex structures
             let basicInfoHtml = "";
             const basicInfoElements = [
                 // Property Info
@@ -1147,24 +1150,69 @@ document.addEventListener("DOMContentLoaded", function() {
 
             const salesTableHtml = document.getElementById("sales-table-container")?.innerHTML || "<p>Sales history not available.</p>";
             
-            // Create print content with enhanced styling
-            const printContent = `
+            // Fetch all data (including Google Maps images/info) before constructing the print content
+            Promise.all([
+                // Assuming googleMapsService.js functions are available in the global scope
+                // or app.js is treated as a module and can import them.
+                // For simplicity here, we'll call them directly as if they are globally available.
+                fetchStaticAerialImageUrl(address, GOOGLE_MAPS_API_KEY),
+                fetchStreetViewImageUrl(address, GOOGLE_MAPS_API_KEY),
+                fetchCinematicAerialInfo(address, GOOGLE_MAPS_API_KEY),
+                fetchAndParseTrusteeData(formatParcelIdForTrustee(parcelId)),
+                fetchAndParseAssessorData(parcelId),
+                fetchAndParseMemphisTaxData(parcelId)
+            ]).then(([staticAerialData, streetViewData, cinematicAerialData, trusteeData, assessorData, memphisData]) => {
+                
+                let staticAerialHtml = '';
+                if (staticAerialData && staticAerialData.imageUri) {
+                    staticAerialHtml = `<img class=\"google-map-media\" src=\"${staticAerialData.imageUri}\" alt=\"Top-Down Aerial View of ${address}\">`;
+                } else {
+                    staticAerialHtml = `<p class=\"google-map-error\">Top-Down Aerial view not available: ${staticAerialData?.error || 'Unknown error'}</p>`;
+                }
+
+                let streetViewHtml = '';
+                if (streetViewData && streetViewData.imageUri) {
+                    streetViewHtml = `<img class=\"google-map-media\" src=\"${streetViewData.imageUri}\" alt=\"Street View of ${address}\">`;
+                } else {
+                    streetViewHtml = `<p class=\"google-map-error\">Street View not available: ${streetViewData?.error || 'Unknown error'}</p>`;
+                }
+
+                let cinematicAerialImageHtml = '';
+                let cinematicAerialVideoLinkHtml = '';
+
+                if (cinematicAerialData) {
+                    if (cinematicAerialData.imageUri) {
+                        cinematicAerialImageHtml = `<img class=\"google-map-media\" src=\"${cinematicAerialData.imageUri}\" alt=\"Cinematic Aerial Snapshot of ${address}\">`;
+                    } else {
+                        cinematicAerialImageHtml = `<p class=\"google-map-error\">Cinematic Aerial snapshot not available: ${cinematicAerialData.error || 'Video/image not found or error.'} </p>`;
+                    }
+                    if (cinematicAerialData.videoUri) {
+                        cinematicAerialVideoLinkHtml = `<p class=\"google-map-videolink\"><a href=\"${cinematicAerialData.videoUri}\" target=\"_blank\">View Cinematic Aerial Video (opens in new tab)</a></p>`;
+                    } else if (!cinematicAerialData.imageUri) { // Only show this if there was also no image
+                        cinematicAerialVideoLinkHtml = `<p class=\"google-map-error\">Cinematic Aerial video not available.</p>`;
+                    }
+                } else {
+                    cinematicAerialImageHtml = `<p class=\"google-map-error\">Cinematic Aerial data could not be retrieved.</p>`;
+                }
+
+
+                const printContent = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>Property Report: ${parcelId}</title>
                     <style>
-                        @media print {
-                            body {
-                                -webkit-print-color-adjust: exact; /* Chrome, Safari */
-                                color-adjust: exact; /* Firefox */
-                            }
-                        }
                         body {
                             font-family: 'Arial', sans-serif;
                             margin: 20px;
                             color: #333;
                             line-height: 1.6;
+                        }
+                         @media print {
+                            body {
+                                -webkit-print-color-adjust: exact; /* Chrome, Safari */
+                                color-adjust: exact; /* Firefox */
+                            }
                         }
                         .report-header {
                             text-align: center;
@@ -1192,92 +1240,67 @@ document.addEventListener("DOMContentLoaded", function() {
                             margin-bottom: 15px;
                             font-weight: 600;
                         }
-                        .info-group h3 { /* For cloned basic info sections */
-                            font-size: 18px;
-                            color: #1a3a5f;
-                            margin-top: 20px;
-                            margin-bottom: 10px;
-                            padding-bottom: 5px;
-                            border-bottom: 1px dashed #ddd;
-                            font-weight: 500;
+                        .info-group h3 { 
+                            font-size: 18px; color: #1a3a5f; margin-top: 20px; margin-bottom: 10px; 
+                            padding-bottom: 5px; border-bottom: 1px dashed #ddd; font-weight: 500; 
                         }
-                         /* Sub-section titles within Trustee info */
-                        #trustee-tax-info h4, .trustee-section h4 {
-                            font-size: 16px;
-                            color: #1a3a5f;
-                            margin-top: 15px;
-                            margin-bottom: 8px;
-                            font-weight: 500;
+                        /* Consolidate sub-section header styles */
+                        .trustee-section h5, .assessor-section h5, .memphis-tax-section h5 {
+                            font-size: 16px; color: #1a3a5f; margin-top: 15px; margin-bottom: 8px; font-weight: 500;
                         }
                         .section-grid {
-                            display: grid;
-                            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                            gap: 10px 20px; /* row-gap column-gap */
-                            margin-bottom: 20px;
+                            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                            gap: 10px 20px; margin-bottom: 20px;
                         }
-                        .info-item {
+                        .info-item { display: flex; font-size: 14px; padding: 5px 0; border-bottom: 1px dotted #eee; }
+                        .info-item:last-child { border-bottom: none; }
+                        .info-item .label { font-weight: 600; color: #444; min-width: 150px; margin-right: 10px; }
+                        .info-item .value { color: #111; word-break: break-word; }
+                        
+                        .data-table-wrapper { overflow-x: auto; margin-bottom: 20px; }
+                        .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                        .data-table th, .data-table td { border: 1px solid #ddd; padding: 8px; text-align: left; white-space: nowrap; }
+                        .data-table th { background-color: #0c2340; color: white; font-weight: 600; }
+                        .data-table tr:nth-child(even) td { background-color: #f9f9f9; }
+                        .data-table a { color: #0066cc; text-decoration: none; }
+                        .data-table a:hover { text-decoration: underline; }
+                        .newest-transaction td { background-color: #e6f7ff !important; font-weight: bold; }
+
+                        .report-footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 12px; color: #777; text-align: center; }
+                        
+                        /* Styles for Google Maps Media */
+                        .google-map-image-container {
                             display: flex;
-                            font-size: 14px;
-                            padding: 5px 0;
-                            border-bottom: 1px dotted #eee;
-                        }
-                        .info-item:last-child {
-                            border-bottom: none;
-                        }
-                        .info-item .label {
-                            font-weight: 600;
-                            color: #444;
-                            min-width: 150px; /* Adjust as needed */
-                            margin-right: 10px;
-                        }
-                        .info-item .value {
-                            color: #111;
-                            word-break: break-word;
-                        }
-                        /* Sales & Tax Table Styles */
-                        .data-table-wrapper {
-                            overflow-x: auto; /* For very wide tables */
-                            margin-bottom: 20px;
-                        }
-                        .data-table {
+                            flex-direction: column; 
+                            overflow: hidden;
+                            position: relative;
+                            align-items: center;
+                            justify-content: center;
                             width: 100%;
-                            border-collapse: collapse;
-                            font-size: 12px; /* Slightly smaller for potentially dense tax tables */
-                        }
-                        .data-table th, .data-table td {
-                            border: 1px solid #ddd;
-                            padding: 8px; /* Slightly smaller padding */
-                            text-align: left;
-                            white-space: nowrap; /* Prevent wrapping in table cells */
-                        }
-                        .data-table th {
-                            background-color: #0c2340;
-                            color: white;
-                            font-weight: 600;
-                        }
-                        .data-table tr:nth-child(even) td {
+                            max-width: 600px; 
+                            margin: 0 auto 20px auto; 
+                            border: 1px solid #eee;
                             background-color: #f9f9f9;
                         }
-                        .data-table a { /* Though we remove them, styles are here if any remain */
-                            color: #0066cc;
-                            text-decoration: none;
+                        .google-map-media {
+                            object-fit: contain; 
+                            max-width: 100%;
+                            max-height: 400px; 
+                            display: block; 
                         }
-                        .data-table a:hover {
-                            text-decoration: underline;
-                        }
-                        .newest-transaction td { /* Applied to sales, can be for tax too if needed */
-                            background-color: #e6f7ff !important; 
-                            font-weight: bold;
-                        }
-                        .report-footer {
-                            margin-top: 40px;
-                            padding-top: 15px;
-                            border-top: 1px solid #ccc;
-                            font-size: 12px;
-                            color: #777;
+                        .google-map-error {
+                            padding: 20px;
                             text-align: center;
+                            color: #777;
+                            width: 100%;
+                            height: 100px; 
+                            display: flex; align-items: center; justify-content: center;
                         }
-                       
+                        .google-map-videolink {
+                            text-align: center;
+                            padding: 5px 0;
+                            font-size: 0.9em;
+                        }
                     </style>
                 </head>
                 <body>
@@ -1295,97 +1318,74 @@ document.addEventListener("DOMContentLoaded", function() {
                         <div class="info-item"><span class="label">ZIP Code:</span> <span class="value">${zipCode}</span></div>
                         <div class="info-item"><span class="label">Last Sale Price:</span> <span class="value">${lastSalePrice}</span></div>
                     </div>
+
+                    <h2 class="section-title">Top-Down Aerial View</h2>
+                    <div class="google-map-image-container">
+                        ${staticAerialHtml}
+                    </div>
+
+                    <h2 class="section-title">Street View</h2>
+                    <div class="google-map-image-container">
+                        ${streetViewHtml}
+                    </div>
+
+                    <h2 class="section-title">Cinematic Aerial (if available)</h2>
+                    <div class="google-map-image-container">
+                        ${cinematicAerialImageHtml}
+                        ${cinematicAerialVideoLinkHtml}
+                    </div>
                     
                     <h2 class="section-title">Detailed Information</h2>
                     ${basicInfoHtml}
                     
                     <h2 class="section-title">Sales History</h2>
-                    ${salesTableHtml}
-
+                    <div class="data-table-wrapper">
+                        ${salesTableHtml}
+                    </div>
+                    
                     <div class="assessor-section">
                         <h2 class="section-title">Assessor Information</h2>
-                        <div id="assessor-info-placeholder">
-                            <p><em>Loading Assessor information... Please wait.</em></p>
-                        </div>
+                        ${assessorData.assessorHtml || '<p>Could not load Assessor data.</p>'}
                     </div>
                     
                     <div class="trustee-section">
                         <h2 class="section-title">Trustee Tax Information</h2>
-                        <div id="trustee-tax-info-placeholder">
-                            <p><em>Loading Trustee tax information... Please wait.</em></p>
-                        </div>
+                        ${trusteeData.trusteeOwnerInfoHtml || ''}
+                        ${trusteeData.summaryTableHtml || ''}
+                        ${trusteeData.paymentHistoryHtml || ''}
                     </div>
 
-                    <div class="memphis-tax-section">
-                        <h2 class="section-title">City of Memphis Tax Information</h2>
-                        <div id="memphis-tax-info-placeholder">
-                            <p><em>Loading City of Memphis tax information... Please wait.</em></p>
-                        </div>
-                    </div>
+                    ${ (memphisData && (memphisData.memphisOwnerInfoHtml || memphisData.memphisTaxTableHtml)) ?
+                        `<div class="memphis-tax-section">
+                            <h2 class="section-title">City of Memphis Tax Information</h2>
+                            ${memphisData.memphisOwnerInfoHtml || ''}
+                            ${memphisData.memphisTaxTableHtml || ''}
+                        </div>` : ''
+                    }
                     
                     <div class="report-footer">
-                        Data provided by Shelby County Government. This report is for informational purposes only and is not an official government document.
+                        <p>&copy; ${new Date().getFullYear()} Shelby County. All rights reserved. Data provided for informational purposes only.</p>
                     </div>
                 </body>
                 </html>
-            `;
-            
-            printWindow.document.open();
-            printWindow.document.write(printContent);
-            // DO NOT close the document yet, we need to inject async data
+                `;
 
-            const parcelIdForLinks = getText("parcel-id"); // Get the standard parcel ID for this
-            const formattedTrusteeParcelIdForPrint = formatParcelIdForTrustee(parcelIdForLinks);
-            // For Memphis, the Parcel ID format is usually space-separated, e.g., "095101 F00034".
-            // We'll use the standard parcelId from our data, assuming it matches this, or needs minimal formatting.
-            const parcelIdForMemphis = parcelIdForLinks; // Assuming parcelIdForLinks is in the correct space-separated format.
-
-            Promise.all([
-                formattedTrusteeParcelIdForPrint ? fetchAndParseTrusteeData(formattedTrusteeParcelIdForPrint) : Promise.resolve({ trusteeOwnerInfoHtml: '<p>Trustee Parcel ID not available.</p>', summaryTableHtml: '', paymentHistoryHtml: '' }),
-                parcelIdForLinks ? fetchAndParseAssessorData(parcelIdForLinks) : Promise.resolve({ assessorHtml: '<p>Parcel ID not available for Assessor lookup.</p>' }),
-                parcelIdForMemphis ? fetchAndParseMemphisTaxData(parcelIdForMemphis) : Promise.resolve({ memphisOwnerInfoHtml: '<p>Parcel ID not available for Memphis Tax lookup.</p>', memphisTaxTableHtml: '' })
-            ]).then(([trusteeData, assessorData, memphisTaxData]) => {
-                const trusteePlaceholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
-                if (trusteePlaceholder) {
-                    let combinedTrusteeHtml = '';
-                    if (trusteeData.trusteeOwnerInfoHtml) combinedTrusteeHtml += trusteeData.trusteeOwnerInfoHtml;
-                    if (trusteeData.summaryTableHtml) combinedTrusteeHtml += trusteeData.summaryTableHtml;
-                    if (trusteeData.paymentHistoryHtml) combinedTrusteeHtml += trusteeData.paymentHistoryHtml;
-                    trusteePlaceholder.innerHTML = combinedTrusteeHtml || '<p>No Trustee tax data returned.</p>';
-                    trusteePlaceholder.querySelectorAll('table').forEach(table => table.classList.add('data-table'));
+                if (printWindow) {
+                    printWindow.document.open();
+                    printWindow.document.write(printContent); 
+                    printWindow.document.close();
+                } else {
+                    alert("Could not open print window. Please check your browser's pop-up blocker settings.");
                 }
-
-                const assessorPlaceholder = printWindow.document.getElementById('assessor-info-placeholder');
-                if (assessorPlaceholder) {
-                    assessorPlaceholder.innerHTML = assessorData.assessorHtml || '<p>No Assessor data returned.</p>';
-                    assessorPlaceholder.querySelectorAll('table').forEach(table => {
-                        table.classList.add('data-table');
-                        table.classList.remove('table-borderless');
-                    });
-                }
-
-                const memphisTaxPlaceholder = printWindow.document.getElementById('memphis-tax-info-placeholder');
-                if (memphisTaxPlaceholder) {
-                    let combinedMemphisHtml = '';
-                    if (memphisTaxData.memphisOwnerInfoHtml) combinedMemphisHtml += memphisTaxData.memphisOwnerInfoHtml;
-                    if (memphisTaxData.memphisTaxTableHtml) combinedMemphisHtml += memphisTaxData.memphisTaxTableHtml;
-                    memphisTaxPlaceholder.innerHTML = combinedMemphisHtml || '<p>No City of Memphis tax data returned.</p>';
-                    memphisTaxPlaceholder.querySelectorAll('table').forEach(table => table.classList.add('data-table'));
-                }
-
-                printWindow.document.close();
-                setTimeout(() => { printWindow.print(); }, 1000); // Increased timeout slightly for more content
             }).catch(error => {
                 console.error("Error fetching data for print report:", error);
-                const trusteePlaceholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
-                if (trusteePlaceholder) trusteePlaceholder.innerHTML = '<p>Failed to load Trustee tax information.</p>';
-                const assessorPlaceholder = printWindow.document.getElementById('assessor-info-placeholder');
-                if (assessorPlaceholder) assessorPlaceholder.innerHTML = '<p>Failed to load Assessor information.</p>';
-                const memphisTaxPlaceholder = printWindow.document.getElementById('memphis-tax-info-placeholder');
-                if (memphisTaxPlaceholder) memphisTaxPlaceholder.innerHTML = '<p>Failed to load City of Memphis Tax information.</p>';
-                
-                printWindow.document.close();
-                setTimeout(() => { printWindow.print(); }, 100);
+                if (printWindow) {
+                    printWindow.document.open();
+                    printWindow.document.write(`<h1>Error Generating Report</h1><p>Could not fetch all necessary data. Please try again. Error: ${error.message}</p>`);
+                    printWindow.document.close();
+                } else {
+                     alert(`Error generating report: ${error.message}`);
+                }
             });
         });
 
