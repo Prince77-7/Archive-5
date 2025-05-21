@@ -64,13 +64,11 @@ app.get('/api/trustee-tax-proxy', async (req, res) => {
     const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
 
     // Construct the curl command
-    // Added -v for verbose output to stderr, and --fail to error on HTTP server errors.
-    // Added --tlsv1.2 to force TLS 1.2 and --ciphers DEFAULT@SECLEVEL=1 for broader cipher compatibility.
-    // Added --insecure to allow connections even with SSL errors or non-standard behavior.
-    const command = `curl -v --fail -s -L --tlsv1.2 --ciphers DEFAULT@SECLEVEL=1 --insecure -A "${userAgent}" "${trusteeUrl}" --compressed`;
+    // Simplified: -v for verbose, --fail for server errors, -s for silent (progress), -L for redirects, --insecure for SSL leniency.
+    const command = `curl -v --fail -s -L --insecure -A "${userAgent}" "${trusteeUrl}" --compressed`;
 
     try {
-        console.log(`TRUSTEE PROXY (server.js via curl): Requesting data for Parcel ID '${parcelIdQuery}' from ${trusteeUrl}`);
+        console.log(`TRUSTEE PROXY (server.js via curl - simplified): Requesting data for Parcel ID '${parcelIdQuery}' from ${trusteeUrl}`);
         
         exec(command, { timeout: 20000, maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
             if (error) {
