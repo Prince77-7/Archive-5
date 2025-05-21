@@ -1029,6 +1029,70 @@ document.addEventListener("DOMContentLoaded", function() {
             }
             // --- End Function to fetch and parse Assessor Data ---
 
+            // --- Function to fetch and parse City of Memphis Tax Data ---
+            async function fetchAndParseMemphisTaxData(parcelIdForMemphis) {
+                console.log("fetchAndParseMemphisTaxData called with:", parcelIdForMemphis);
+                if (!parcelIdForMemphis) {
+                    return { memphisOwnerInfoHtml: '<p>Parcel ID not available for Memphis Tax lookup.</p>', memphisTaxTableHtml: '' };
+                }
+
+                try {
+                    // Parcel ID for Memphis ePayments is typically space-separated
+                    const response = await fetch(`/api/memphis-tax-proxy?parcelId=${encodeURIComponent(parcelIdForMemphis)}`);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error("Error fetching Memphis tax data from proxy:", response.status, errorText);
+                        return { 
+                            memphisOwnerInfoHtml: `<p>Error fetching Memphis Tax data (Status: ${response.status}). ${errorText}</p>`,
+                            memphisTaxTableHtml: '' 
+                        };
+                    }
+
+                    const htmlString = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlString, "text/html");
+
+                    let memphisOwnerInfoHtml = '<h5>Property & Owner Information (City of Memphis)</h5><div class="section-grid">';
+                    let memphisTaxTableHtml = '';
+
+                    // Extract owner/property info using specific span IDs
+                    const parcelNo = doc.getElementById('MainBodyPlaceHolder_lblParcelNo')?.textContent.trim() || 'N/A';
+                    const ownerName = doc.getElementById('MainBodyPlaceHolder_lblOwnerName')?.textContent.trim() || 'N/A';
+                    const propAddress = doc.getElementById('MainBodyPlaceHolder_lblOwnerAddress')?.textContent.trim() || 'N/A';
+                    const currBalance = doc.getElementById('MainBodyPlaceHolder_lblCurrBalance')?.textContent.trim() || 'N/A';
+
+                    memphisOwnerInfoHtml += `<div class="info-item"><span class="label">Parcel Number:</span> <span class="value">${parcelNo}</span></div>`;
+                    memphisOwnerInfoHtml += `<div class="info-item"><span class="label">Property Owner:</span> <span class="value">${ownerName}</span></div>`;
+                    memphisOwnerInfoHtml += `<div class="info-item"><span class="label">Property Address:</span> <span class="value">${propAddress}</span></div>`;
+                    memphisOwnerInfoHtml += `<div class="info-item"><span class="label">Current Balance:</span> <span class="value">${currBalance}</span></div>`;
+                    memphisOwnerInfoHtml += '</div>'; // Close section-grid
+
+                    // Extract the main tax details table
+                    const taxTable = doc.getElementById('MainBodyPlaceHolder_gridDetail');
+                    if (taxTable) {
+                        const clonedTable = taxTable.cloneNode(true);
+                        // Remove hyperlinks from table to simplify for print
+                        clonedTable.querySelectorAll('a[href*="javascript:ShowHistory"]').forEach(link => {
+                            const parentTd = link.parentNode;
+                            parentTd.textContent = link.textContent; // Replace link with its text content
+                        });
+                        memphisTaxTableHtml = '<h5>Tax Year Details (City of Memphis)</h5>' + clonedTable.outerHTML;
+                    } else {
+                        memphisTaxTableHtml = '<p>Could not parse City of Memphis tax details table. Structure may have changed.</p>';
+                    }
+
+                    return { memphisOwnerInfoHtml, memphisTaxTableHtml };
+
+                } catch (error) {
+                    console.error("Error in fetchAndParseMemphisTaxData:", error);
+                    return { 
+                        memphisOwnerInfoHtml: `<p>Client-side error processing Memphis tax data: ${error.message}</p>`,
+                        memphisTaxTableHtml: ''
+                    };
+                }
+            }
+            // --- End Function to fetch and parse City of Memphis Tax Data ---
+
             // Clone relevant sections for printing to ensure all data is captured
             // We need to be more selective to avoid cloning interactive elements or overly complex structures
             let basicInfoHtml = "";
@@ -1244,11 +1308,18 @@ document.addEventListener("DOMContentLoaded", function() {
                             <p><em>Loading Assessor information... Please wait.</em></p>
                         </div>
                     </div>
-
+                    
                     <div class="trustee-section">
                         <h2 class="section-title">Trustee Tax Information</h2>
                         <div id="trustee-tax-info-placeholder">
                             <p><em>Loading Trustee tax information... Please wait.</em></p>
+                        </div>
+                    </div>
+
+                    <div class="memphis-tax-section">
+                        <h2 class="section-title">City of Memphis Tax Information</h2>
+                        <div id="memphis-tax-info-placeholder">
+                            <p><em>Loading City of Memphis tax information... Please wait.</em></p>
                         </div>
                     </div>
                     
@@ -1265,11 +1336,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
             const parcelIdForLinks = getText("parcel-id"); // Get the standard parcel ID for this
             const formattedTrusteeParcelIdForPrint = formatParcelIdForTrustee(parcelIdForLinks);
+            // For Memphis, the Parcel ID format is usually space-separated, e.g., "095101 F00034".
+            // We'll use the standard parcelId from our data, assuming it matches this, or needs minimal formatting.
+            const parcelIdForMemphis = parcelIdForLinks; // Assuming parcelIdForLinks is in the correct space-separated format.
 
             Promise.all([
                 formattedTrusteeParcelIdForPrint ? fetchAndParseTrusteeData(formattedTrusteeParcelIdForPrint) : Promise.resolve({ trusteeOwnerInfoHtml: '<p>Trustee Parcel ID not available.</p>', summaryTableHtml: '', paymentHistoryHtml: '' }),
-                parcelIdForLinks ? fetchAndParseAssessorData(parcelIdForLinks) : Promise.resolve({ assessorHtml: '<p>Parcel ID not available for Assessor lookup.</p>' })
-            ]).then(([trusteeData, assessorData]) => {
+                parcelIdForLinks ? fetchAndParseAssessorData(parcelIdForLinks) : Promise.resolve({ assessorHtml: '<p>Parcel ID not available for Assessor lookup.</p>' }),
+                parcelIdForMemphis ? fetchAndParseMemphisTaxData(parcelIdForMemphis) : Promise.resolve({ memphisOwnerInfoHtml: '<p>Parcel ID not available for Memphis Tax lookup.</p>', memphisTaxTableHtml: '' })
+            ]).then(([trusteeData, assessorData, memphisTaxData]) => {
                 const trusteePlaceholder = printWindow.document.getElementById('trustee-tax-info-placeholder');
                 if (trusteePlaceholder) {
                     let combinedTrusteeHtml = '';
@@ -1283,11 +1358,19 @@ document.addEventListener("DOMContentLoaded", function() {
                 const assessorPlaceholder = printWindow.document.getElementById('assessor-info-placeholder');
                 if (assessorPlaceholder) {
                     assessorPlaceholder.innerHTML = assessorData.assessorHtml || '<p>No Assessor data returned.</p>';
-                    // Re-apply .data-table class to any tables injected from Assessor site
                     assessorPlaceholder.querySelectorAll('table').forEach(table => {
                         table.classList.add('data-table');
                         table.classList.remove('table-borderless');
                     });
+                }
+
+                const memphisTaxPlaceholder = printWindow.document.getElementById('memphis-tax-info-placeholder');
+                if (memphisTaxPlaceholder) {
+                    let combinedMemphisHtml = '';
+                    if (memphisTaxData.memphisOwnerInfoHtml) combinedMemphisHtml += memphisTaxData.memphisOwnerInfoHtml;
+                    if (memphisTaxData.memphisTaxTableHtml) combinedMemphisHtml += memphisTaxData.memphisTaxTableHtml;
+                    memphisTaxPlaceholder.innerHTML = combinedMemphisHtml || '<p>No City of Memphis tax data returned.</p>';
+                    memphisTaxPlaceholder.querySelectorAll('table').forEach(table => table.classList.add('data-table'));
                 }
 
                 printWindow.document.close();
@@ -1298,6 +1381,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (trusteePlaceholder) trusteePlaceholder.innerHTML = '<p>Failed to load Trustee tax information.</p>';
                 const assessorPlaceholder = printWindow.document.getElementById('assessor-info-placeholder');
                 if (assessorPlaceholder) assessorPlaceholder.innerHTML = '<p>Failed to load Assessor information.</p>';
+                const memphisTaxPlaceholder = printWindow.document.getElementById('memphis-tax-info-placeholder');
+                if (memphisTaxPlaceholder) memphisTaxPlaceholder.innerHTML = '<p>Failed to load City of Memphis Tax information.</p>';
                 
                 printWindow.document.close();
                 setTimeout(() => { printWindow.print(); }, 100);

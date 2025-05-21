@@ -152,6 +152,49 @@ app.get('/api/assessor-proxy', async (req, res) => {
     }
 });
 
+// NEW: Proxy endpoint for City of Memphis Tax Details
+app.get('/api/memphis-tax-proxy', async (req, res) => {
+    const parcelIdQuery = req.query.parcelId;
+    if (!parcelIdQuery) {
+        return res.status(400).send('ParcelID query parameter is required for Memphis tax proxy');
+    }
+
+    // Parcel ID for Memphis ePayments is typically space-separated, e.g., "095101 F00034"
+    const memphisTaxUrl = `https://epayments.memphistn.gov/Property/Detail.aspx?ParcelNo=${encodeURIComponent(parcelIdQuery)}`;
+    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+    
+    // Using curl, similar to other proxies, including --insecure due to potential SSL strictness on older systems/CDNs
+    const command = `curl -v --fail -s -L --insecure -A "${userAgent}" "${memphisTaxUrl}" --compressed`;
+
+    try {
+        console.log(`MEMPHIS TAX PROXY (server.js via curl): Requesting data for Parcel ID '${parcelIdQuery}' from ${memphisTaxUrl}`);
+        
+        exec(command, { timeout: 25000, maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`MEMPHIS TAX PROXY EXEC ERROR (server.js) for Parcel ID '${parcelIdQuery}':`, error.message);
+                console.error(`Curl stderr for Memphis Tax: ${stderr}`);
+                if (error.killed) {
+                    res.status(504).send('Request to Memphis ePayments website timed out (curl proxy).');
+                } else if (stderr.includes('Could not resolve host') || stderr.includes('SSL routines::unsafe legacy renegotiation disabled') || stderr.includes('SSL')) {
+                    res.status(502).send('Bad Gateway: Error connecting to Memphis ePayments website (curl proxy - network/SSL issue). Check server logs.');
+                } else {
+                    res.status(500).send('Server error while attempting to proxy request to Memphis ePayments website (curl proxy). Check server logs.');
+                }
+                return;
+            }
+            if (stdout) {
+                res.send(stdout);
+            } else {
+                console.warn(`MEMPHIS TAX PROXY (server.js via curl): No stdout received for Parcel ID '${parcelIdQuery}', but no error. Stderr: ${stderr}`);
+                res.status(204).send(); // No content, but request was successful
+            }
+        });
+    } catch (error) {
+        console.error(`MEMPHIS TAX PROXY GENERIC CATCH ERROR (server.js) for Parcel ID '${parcelIdQuery}':`, error.message);
+        res.status(500).send('Server error while attempting to proxy request to Memphis ePayments website (server.js general).');
+    }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Proxy server running at http://localhost:${PORT}`);
