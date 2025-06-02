@@ -147,29 +147,22 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         view.ui.add(bgExpand, "top-right");
 
-        // Create a search widget
-        const searchWidget = new Search({
-            view: view,
-            allPlaceholder: "Search by address, owner, or parcel ID",
-            includeDefaultSources: false,
-            sources: [
-                {
-                    layer: parcelLayer,
-                    searchFields: ["PARID", "Jur_num", "Jur_stnam", "OWNNAME"], // Updated search fields to match outFields
-                    displayField: "PARID", 
-                    exactMatch: false,
-                    // Explicitly list outFields for search source to be safe
-                    outFields: [
-                        "PARID", "Jur_num", "Jur_stnam", "MapNumber", "PropType", "LandUse", 
-                        "OWNNAME", "OWNADDR", "OWNCITY", "OWNSTATE", "OWNZIP", "OWNERNOTES",
-                        "Nbhd", "sqft_livingarea", "LandValue", "ImprovementValue", "TotalValue", "LivingUnits"
-                    ],
-                    name: "Parcels",
-                    placeholder: "e.g., 123 Main St or 012345 00123"
-                }
-            ]
-        });
-        view.ui.add(searchWidget, "top-right");
+        // Create fullscreen toggle button for the map
+        const fullscreenToggleDiv = document.createElement("div");
+        fullscreenToggleDiv.className = "esri-widget esri-widget--button esri-widget--raised esri-interactive";
+        fullscreenToggleDiv.id = "fullscreen-toggle";
+        fullscreenToggleDiv.title = "Toggle Fullscreen Map";
+        fullscreenToggleDiv.innerHTML = '<span class="esri-icon-maximize"></span>';
+        fullscreenToggleDiv.style.fontSize = "16px";
+        fullscreenToggleDiv.style.width = "32px";
+        fullscreenToggleDiv.style.height = "32px";
+        fullscreenToggleDiv.style.display = "flex";
+        fullscreenToggleDiv.style.alignItems = "center";
+        fullscreenToggleDiv.style.justifyContent = "center";
+        fullscreenToggleDiv.style.cursor = "pointer";
+        
+        // Add the fullscreen button to the map UI
+        view.ui.add(fullscreenToggleDiv, "top-right");
 
         // Tab navigation elements
         const parcelTabs = document.getElementById("parcel-tabs");
@@ -363,6 +356,43 @@ document.addEventListener("DOMContentLoaded", function() {
         // Add event listeners for navigation buttons
         navBackButton.addEventListener('click', () => navigateToProperty('back'));
         navForwardButton.addEventListener('click', () => navigateToProperty('forward'));
+
+        // Fullscreen Map Toggle Functionality
+        let isFullscreen = false;
+        
+        fullscreenToggleDiv.addEventListener('click', () => {
+            isFullscreen = !isFullscreen;
+            
+            if (isFullscreen) {
+                // Enter fullscreen mode
+                document.body.classList.add('mobile-fullscreen-mode');
+                fullscreenToggleDiv.innerHTML = '<span class="esri-icon-minimize"></span>';
+                fullscreenToggleDiv.title = "Exit Fullscreen";
+                
+                // Resize the map view to fit the new container
+                setTimeout(() => {
+                    if (view) {
+                        view.container.style.width = '100vw';
+                        view.container.style.height = '100vh';
+                        view.resize();
+                    }
+                }, 100);
+            } else {
+                // Exit fullscreen mode
+                document.body.classList.remove('mobile-fullscreen-mode');
+                fullscreenToggleDiv.innerHTML = '<span class="esri-icon-maximize"></span>';
+                fullscreenToggleDiv.title = "Toggle Fullscreen Map";
+                
+                // Resize the map view back to normal
+                setTimeout(() => {
+                    if (view) {
+                        view.container.style.width = '';
+                        view.container.style.height = '';
+                        view.resize();
+                    }
+                }, 100);
+            }
+        });
 
         // Add keyboard shortcuts for navigation (Alt + Arrow keys)
         document.addEventListener('keydown', (event) => {

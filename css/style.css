@@ -537,7 +537,16 @@ footer {
     flex-direction: column;
 }
 
-.search-group label {
+.search-bar-always-visible {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-group label,
+.search-bar-always-visible label {
     margin-bottom: 5px;
     font-weight: bold;
     color: var(--text-secondary);
@@ -1530,4 +1539,56 @@ select:focus {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Fullscreen mode styles */
+
+/* Mobile fullscreen mode */
+body.mobile-fullscreen-mode {
+    overflow: hidden;
+}
+
+body.mobile-fullscreen-mode #sidebar {
+    display: none !important;
+}
+
+body.mobile-fullscreen-mode #viewDiv {
+    width: 100vw !important;
+    height: 100vh !important;
+    left: 0 !important;
+}
+
+body.mobile-fullscreen-mode header {
+    display: none !important;
+}
+
+
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+    
+    /* Additional mobile-specific input styling to prevent zoom */
+    input[type="text"], 
+    input[type="search"], 
+    input[type="email"], 
+    input[type="number"], 
+    input[type="tel"], 
+    input[type="url"], 
+    input[type="password"], 
+    textarea, 
+    select {
+        font-size: 16px !important;
+        transform: translateZ(0);
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    /* Prevent zoom on focus for iOS */
+    input:focus,
+    select:focus,
+    textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px var(--accent-muted);
+    }
 }

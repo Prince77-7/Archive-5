@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shelby County Parcel Viewer</title>
     <!-- ArcGIS API for JavaScript -->
     <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/dark/main.css" />
@@ -29,19 +29,24 @@
                         <h2>Search</h2>
                         <div> <!-- Wrapper for buttons -->
                             <button id="show-favorites-button" class="action-button" title="Show Favorites" style="padding: 2px 6px; font-size: 0.8em; margin-right: 5px;">⭐ Favorites</button>
-                            <button id="toggle-search-content-button" class="action-button" title="Toggle Search Panel Visibility" style="padding: 2px 6px; font-size: 0.8em;">Hide</button>
+                            <button id="toggle-search-content-button" class="action-button" title="Toggle Search Panel Visibility" style="padding: 2px 6px; font-size: 0.8em;">Show</button>
                         </div>
                     </div>
-                    <div class="search-group">
+                    <!-- Always visible search bar -->
+                    <div class="search-bar-always-visible">
                         <label for="search-input">Search by Address, Parcel ID, or Owner Name:</label>
                         <input type="text" id="search-input" placeholder="Search by Address, Parcel ID, or Owner Name">
                         <button id="search-button">Search</button>
+                    </div>
+
+                    <!-- Collapsible search content -->
+                    <div class="search-group" style="display: none;">
                         <!-- Moved Toggle Button for Processed Address List -->
                         <button id="toggle-processed-list-button" class="action-button" style="margin-top: 10px; display: none;">Hide Processed Addresses</button>
                     </div>
 
                     <!-- File Upload Section -->
-                    <div id="upload-section" class="info-group">
+                    <div id="upload-section" class="info-group" style="display: none;">
                         <!-- Saved Datasets Section -->
                         <div id="saved-datasets-section" class="info-group" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #444;">
                             <h4>Load Saved Dataset</h4>
@@ -81,7 +86,7 @@
                     <!-- End File Upload Section -->
 
                     <!-- Container for property search results list -->
-                    <div id="property-list-container"></div>
+                    <div id="property-list-container" style="display: none;"></div>
                 </div>
 
                 <!-- Container for Favorites List -->
