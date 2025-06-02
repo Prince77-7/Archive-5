@@ -1662,9 +1662,11 @@ document.addEventListener("DOMContentLoaded", function() {
                         // Clear any existing highlights and graphics
                         clearMapGraphics();
                         
-                        // Remove any existing property list
+                        // Remove any existing property list and toggle button
                         const existingList = document.getElementById('property-list');
                         if (existingList) existingList.remove();
+                        const existingToggleButton = document.getElementById('toggle-owner-properties-button');
+                        if (existingToggleButton) existingToggleButton.remove();
                         
                         // If multiple properties found
                         if (results.features.length > 1) {
@@ -1767,12 +1769,40 @@ document.addEventListener("DOMContentLoaded", function() {
                             // Zoom to the selected property
                             view.goTo(allGraphics, { padding: 50 })
                                 .then(() => {
-                                    // Display message with count and add the property list
-                                    instructions.textContent = `Found ${results.features.length} properties owned by "${ownerName}". Click on a property below or on the map for details.`;
+                                    // Create a toggle button for the property list
+                                    const toggleButton = document.createElement('button');
+                                    toggleButton.id = 'toggle-owner-properties-button';
+                                    toggleButton.className = 'action-button';
+                                    toggleButton.style.marginTop = '10px';
+                                    toggleButton.style.marginBottom = '10px';
+                                    toggleButton.style.fontSize = '0.85em';
+                                    toggleButton.style.padding = '6px 12px';
+                                    toggleButton.textContent = `Hide ${results.features.length} Properties`;
+                                    toggleButton.title = 'Toggle property list visibility';
+                                    
+                                    // Display message with count
+                                    instructions.innerHTML = `
+                                        Found ${results.features.length} properties owned by "${ownerName}". Click on a property below or on the map for details.
+                                    `;
                                     instructions.classList.remove("hidden");
                                     
-                                    // Insert the property list after the instructions
-                                    instructions.parentNode.insertBefore(propertyListContainer, instructions.nextSibling);
+                                    // Insert the toggle button after the instructions
+                                    instructions.parentNode.insertBefore(toggleButton, instructions.nextSibling);
+                                    
+                                    // Insert the property list after the toggle button
+                                    toggleButton.parentNode.insertBefore(propertyListContainer, toggleButton.nextSibling);
+                                    
+                                    // Add toggle functionality
+                                    toggleButton.addEventListener('click', () => {
+                                        const isVisible = propertyListContainer.style.display !== 'none';
+                                        if (isVisible) {
+                                            propertyListContainer.style.display = 'none';
+                                            toggleButton.textContent = `Show ${results.features.length} Properties`;
+                                        } else {
+                                            propertyListContainer.style.display = 'block';
+                                            toggleButton.textContent = `Hide ${results.features.length} Properties`;
+                                        }
+                                    });
                                 });
                         } else {
                             // If only one property, display its details
@@ -1787,9 +1817,11 @@ document.addEventListener("DOMContentLoaded", function() {
                         parcelTabs.classList.add("hidden");
                         reportContainer.classList.add("hidden");
                         
-                        // Remove any existing property list
+                        // Remove any existing property list and toggle button
                         const existingList = document.getElementById('property-list');
                         if (existingList) existingList.remove();
+                        const existingToggleButton = document.getElementById('toggle-owner-properties-button');
+                        if (existingToggleButton) existingToggleButton.remove();
                     }
                 })
                 .catch(function(error) {
@@ -1800,9 +1832,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     parcelTabs.classList.add("hidden");
                     reportContainer.classList.add("hidden");
                     
-                    // Remove any existing property list
+                    // Remove any existing property list and toggle button
                     const existingList = document.getElementById('property-list');
                     if (existingList) existingList.remove();
+                    const existingToggleButton = document.getElementById('toggle-owner-properties-button');
+                    if (existingToggleButton) existingToggleButton.remove();
                 });
         }
         
@@ -3070,9 +3104,11 @@ ownerNameSearchButton.addEventListener('click', () => {
                 // Clear any existing highlights and graphics
                 clearMapGraphics();
                 
-                // Remove any existing property list
+                // Remove any existing property list and toggle button
                 const existingList = document.getElementById('property-list');
                 if (existingList) existingList.remove();
+                const existingToggleButton = document.getElementById('toggle-owner-properties-button');
+                if (existingToggleButton) existingToggleButton.remove();
                 
                 // If multiple properties found
                 if (results.features.length > 1) {
