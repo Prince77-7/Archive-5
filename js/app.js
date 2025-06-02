@@ -280,8 +280,102 @@ document.addEventListener("DOMContentLoaded", function() {
         const deleteSavedDatasetButton = document.getElementById("delete-saved-dataset-button");
         const savedDatasetsStatus = document.getElementById("saved-datasets-status");
 
+        // Property Navigation UI Elements
+        const propertyNavigation = document.getElementById("property-navigation");
+        const navBackButton = document.getElementById("nav-back-button");
+        const navForwardButton = document.getElementById("nav-forward-button");
+        const navCounter = document.getElementById("nav-counter");
+
         // Initial load of saved datasets
         loadSavedDatasets();
+
+        // Property Navigation Functions
+        function addToPropertyHistory(attributes, geometry) {
+            // Create a copy of the property data
+            const propertyEntry = {
+                attributes: { ...attributes },
+                geometry: geometry,
+                timestamp: Date.now(),
+                id: attributes.PARID || attributes.PARCELID || `property_${Date.now()}`
+            };
+
+            // If we're not at the end of history, remove everything after current position
+            if (currentHistoryIndex < propertyHistory.length - 1) {
+                propertyHistory = propertyHistory.slice(0, currentHistoryIndex + 1);
+            }
+
+            // Check if this is the same as the current property (avoid duplicates)
+            if (propertyHistory.length > 0 && 
+                propertyHistory[currentHistoryIndex]?.id === propertyEntry.id) {
+                return; // Don't add duplicate
+            }
+
+            // Add new property to history
+            propertyHistory.push(propertyEntry);
+            currentHistoryIndex = propertyHistory.length - 1;
+
+            // Limit history to 50 properties to avoid memory issues
+            if (propertyHistory.length > 50) {
+                propertyHistory.shift();
+                currentHistoryIndex--;
+            }
+
+            updateNavigationUI();
+        }
+
+        function updateNavigationUI() {
+            if (propertyHistory.length <= 1) {
+                propertyNavigation.classList.add("hidden");
+                return;
+            }
+
+            propertyNavigation.classList.remove("hidden");
+            
+            // Update counter
+            navCounter.textContent = `${currentHistoryIndex + 1} of ${propertyHistory.length}`;
+            
+            // Update button states
+            navBackButton.disabled = currentHistoryIndex <= 0;
+            navForwardButton.disabled = currentHistoryIndex >= propertyHistory.length - 1;
+        }
+
+        function navigateToProperty(direction) {
+            let newIndex = currentHistoryIndex;
+            
+            if (direction === 'back' && currentHistoryIndex > 0) {
+                newIndex = currentHistoryIndex - 1;
+            } else if (direction === 'forward' && currentHistoryIndex < propertyHistory.length - 1) {
+                newIndex = currentHistoryIndex + 1;
+            } else {
+                return; // No navigation possible
+            }
+
+            currentHistoryIndex = newIndex;
+            const propertyEntry = propertyHistory[currentHistoryIndex];
+            
+            if (propertyEntry) {
+                // Display the property without adding to history (since we're navigating)
+                displayParcelInfo(propertyEntry.attributes, propertyEntry.geometry, false);
+                updateNavigationUI();
+            }
+        }
+
+        // Add event listeners for navigation buttons
+        navBackButton.addEventListener('click', () => navigateToProperty('back'));
+        navForwardButton.addEventListener('click', () => navigateToProperty('forward'));
+
+        // Add keyboard shortcuts for navigation (Alt + Arrow keys)
+        document.addEventListener('keydown', (event) => {
+            if (event.altKey && propertyHistory.length > 1) {
+                if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    navigateToProperty('back');
+                } else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    navigateToProperty('forward');
+                }
+            }
+        });
 
         // Set up tab navigation
         tabButtons.forEach(button => {
@@ -298,10 +392,15 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         // Function to display comprehensive parcel information
-        function displayParcelInfo(attributes, geometry) {
+        function displayParcelInfo(attributes, geometry, addToHistory = true) {
             if (attributes) {
                 // Store the current parcel data for reference
                 currentParcelData = { ...attributes, geometry: geometry, id: attributes.PARID }; // Add geometry and id
+                
+                // Add to navigation history if this is a new selection (not navigation)
+                if (addToHistory) {
+                    addToPropertyHistory(attributes, geometry);
+                }
                 
                 // Show the parcel details section and tabs
                 parcelDetails.classList.remove("hidden");

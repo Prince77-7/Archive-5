@@ -98,7 +98,18 @@
                 <!-- End Favorites Container -->
 
                 <div id="parcel-info">
-                    <h2>Parcel Information</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h2>Parcel Information</h2>
+                        <div id="property-navigation" class="hidden" style="display: flex; gap: 5px;">
+                            <button id="nav-back-button" class="nav-button" title="Previous Property (Alt + ←)" disabled>
+                                ← Back
+                            </button>
+                            <span id="nav-counter" class="nav-counter" title="Property navigation history">1 of 1</span>
+                            <button id="nav-forward-button" class="nav-button" title="Next Property (Alt + →)" disabled>
+                                Forward →
+                            </button>
+                        </div>
+                    </div>
                     <p class="instructions">Click on a parcel to view comprehensive property details.</p>
                     
                     <!-- Tabbed navigation for parcel details -->
