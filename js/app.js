@@ -51,6 +51,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Variable to store the current parcel data
         let currentParcelData = null;
+        
+        // Property navigation history system
+        let propertyHistory = [];
+        let currentHistoryIndex = -1;
         let uploadedFileData = null; // Variable to store parsed file data
         let uploadedFileHeaders = []; // Variable to store file headers
         let currentUploadedFileName = null; // Variable to store the name of the currently uploaded file
@@ -1225,6 +1229,35 @@ document.addEventListener("DOMContentLoaded", function() {
                     mapScreenshotHtml = `<p class=\"google-map-error\">Current map view screenshot not available: ${mapScreenshotData?.error || 'Unknown error'}</p>`;
                 }
 
+                // Generate Google Maps links for direct access
+                let googleMapsLinksHtml = '';
+                if (coordinates) {
+                    // Satellite view link - opens Google Maps in satellite mode at this location
+                    const satelliteUrl = `https://www.google.com/maps/@${coordinates.lat},${coordinates.lng},19z/data=!3m1!1e3`;
+                    // Street view link - opens Google Maps in street view mode at this location
+                    const streetViewUrl = `https://www.google.com/maps/@${coordinates.lat},${coordinates.lng},3a,75y,0h,90t/data=!3m6!1e1`;
+                    
+                    googleMapsLinksHtml = {
+                        satellite: `<a href="${satelliteUrl}" target="_blank" class="google-maps-link" title="Open this location in Google Maps Satellite View">🌍 Open in Google Maps</a>`,
+                        streetView: `<a href="${streetViewUrl}" target="_blank" class="google-maps-link" title="Open this location in Google Maps Street View">🚶 Open in Google Maps</a>`
+                    };
+                } else if (address) {
+                    // Fallback to address-based URLs if coordinates aren't available
+                    const encodedAddress = encodeURIComponent(`${address}, Shelby County, TN`);
+                    const satelliteUrl = `https://www.google.com/maps/place/${encodedAddress}/@,19z/data=!3m1!1e3`;
+                    const streetViewUrl = `https://www.google.com/maps/place/${encodedAddress}/@,3a,75y,0h,90t/data=!3m6!1e1`;
+                    
+                    googleMapsLinksHtml = {
+                        satellite: `<a href="${satelliteUrl}" target="_blank" class="google-maps-link" title="Open this address in Google Maps Satellite View">🌍 Open in Google Maps</a>`,
+                        streetView: `<a href="${streetViewUrl}" target="_blank" class="google-maps-link" title="Open this address in Google Maps Street View">🚶 Open in Google Maps</a>`
+                    };
+                } else {
+                    googleMapsLinksHtml = {
+                        satellite: '',
+                        streetView: ''
+                    };
+                }
+
                 const printContent = `
                 <!DOCTYPE html>
                 <html>
@@ -1268,6 +1301,26 @@ document.addEventListener("DOMContentLoaded", function() {
                             margin-top: 25px;
                             margin-bottom: 15px;
                             font-weight: 600;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+                        .google-maps-link {
+                            font-size: 14px;
+                            color: #1a73e8;
+                            text-decoration: none;
+                            background-color: #f8f9fa;
+                            padding: 6px 12px;
+                            border-radius: 4px;
+                            border: 1px solid #dadce0;
+                            font-weight: 500;
+                            transition: all 0.2s ease;
+                            white-space: nowrap;
+                        }
+                        .google-maps-link:hover {
+                            background-color: #e8f0fe;
+                            border-color: #1a73e8;
+                            text-decoration: none;
                         }
                         .info-group h3 { 
                             font-size: 18px; color: #1a3a5f; margin-top: 20px; margin-bottom: 10px; 
@@ -1350,12 +1403,12 @@ document.addEventListener("DOMContentLoaded", function() {
                         <div class="info-item"><span class="label">Last Sale Price:</span> <span class="value">${lastSalePrice}</span></div>
                     </div>
 
-                    <h2 class="section-title">Top-Down Aerial View</h2>
+                    <h2 class="section-title">Top-Down Aerial View ${googleMapsLinksHtml.satellite}</h2>
                     <div class="google-map-image-container">
                         ${staticAerialHtml}
                     </div>
 
-                    <h2 class="section-title">Street View</h2>
+                    <h2 class="section-title">Street View ${googleMapsLinksHtml.streetView}</h2>
                     <div class="google-map-image-container">
                         ${streetViewHtml}
                     </div>
@@ -2841,6 +2894,24 @@ function loadSavedDatasets() {
     if (clearCacheButton) {
         clearCacheButton.addEventListener("click", function() {
             console.log("Clear Cache & Reload button clicked.");
+            
+            // Show confirmation warning
+            const confirmMessage = `⚠️ WARNING: This will permanently delete all your saved data including:
+
+• All favorited properties
+• All saved datasets from file uploads
+• All application settings
+• Browser cache data
+
+This action cannot be undone. Are you sure you want to continue?`;
+
+            const userConfirmed = confirm(confirmMessage);
+            
+            if (!userConfirmed) {
+                console.log("User cancelled cache clearing operation.");
+                return; // User cancelled, don't proceed
+            }
+
             try {
                 // Clear localStorage (favorites, saved datasets)
                 localStorage.clear();
@@ -2850,15 +2921,15 @@ function loadSavedDatasets() {
                 sessionStorage.clear();
                 console.log("sessionStorage cleared.");
 
-                // Optionally, inform the user
-                alert("Application data (favorites, saved datasets) cleared. The page will now reload.");
+                // Inform the user that data has been cleared
+                alert("✅ Application data successfully cleared. The page will now reload with fresh settings.");
 
                 // Perform a hard reload
                 location.reload(true);
 
             } catch (e) {
                 console.error("Error during cache clearing or reload:", e);
-                alert("An error occurred while trying to clear data. Please try manually clearing your browser cache.");
+                alert("❌ An error occurred while trying to clear data. Please try manually clearing your browser cache or contact support.");
             }
         });
     }
