@@ -1150,15 +1150,59 @@ document.addEventListener("DOMContentLoaded", function() {
 
             const salesTableHtml = document.getElementById("sales-table-container")?.innerHTML || "<p>Sales history not available.</p>";
             
-            // Fetch all data (including Google Maps images/info) before constructing the print content
+            // Extract coordinates from current parcel data for more accurate Google Maps API calls
+            let coordinates = null;
+            if (currentParcelData && currentParcelData.geometry) {
+                try {
+                    // Get centroid of the parcel for coordinate-based API calls
+                    const centroid = currentParcelData.geometry.centroid || 
+                                   (currentParcelData.geometry.type === "polygon" ? 
+                                    currentParcelData.geometry.extent.center : 
+                                    currentParcelData.geometry);
+                    
+                    if (centroid) {
+                        // Try different coordinate properties that ArcGIS might use
+                        let lat, lng;
+                        
+                        if (centroid.latitude !== undefined && centroid.longitude !== undefined) {
+                            lat = centroid.latitude;
+                            lng = centroid.longitude;
+                        } else if (centroid.y !== undefined && centroid.x !== undefined) {
+                            // ArcGIS often uses x,y instead of lng,lat
+                            lat = centroid.y;
+                            lng = centroid.x;
+                        }
+                        
+                        if (lat && lng) {
+                            // Ensure we have reasonable coordinate values for Shelby County area
+                            // Shelby County is roughly: lat 35.0-35.3, lng -90.3 to -89.6
+                            if (lat > 34.5 && lat < 36.0 && lng > -91.0 && lng < -89.0) {
+                                coordinates = { 
+                                    lat: parseFloat(lat.toFixed(6)), 
+                                    lng: parseFloat(lng.toFixed(6)) 
+                                };
+                                console.log("Using parcel centroid coordinates for Google Maps APIs:", coordinates);
+                                console.log("Centroid object details:", centroid);
+                            } else {
+                                console.warn("Coordinates appear to be outside Shelby County range:", { lat, lng });
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn("Could not extract coordinates from parcel geometry:", error);
+                }
+            }
+
+            // Fetch all data (including Google Maps images/info and map screenshot) before constructing the print content
             Promise.all([
-                fetchStaticAerialImageUrl(address, GOOGLE_MAPS_API_KEY),
-                fetchStreetViewImageUrl(address, GOOGLE_MAPS_API_KEY),
+                fetchStaticAerialImageUrl(address, GOOGLE_MAPS_API_KEY, { coordinates }),
+                fetchStreetViewImageUrl(address, GOOGLE_MAPS_API_KEY, { coordinates }),
+                captureMapViewScreenshot(view, { width: 1200, height: 900, format: "png", quality: 100 }),
                 // fetchCinematicAerialInfo(address, GOOGLE_MAPS_API_KEY), // Removed for now
                 fetchAndParseTrusteeData(formatParcelIdForTrustee(parcelId)),
                 fetchAndParseAssessorData(parcelId),
                 fetchAndParseMemphisTaxData(parcelId)
-            ]).then(([staticAerialData, streetViewData, trusteeData, assessorData, memphisData]) => { // Removed cinematicAerialData from destructured array
+            ]).then(([staticAerialData, streetViewData, mapScreenshotData, trusteeData, assessorData, memphisData]) => { // Added mapScreenshotData to destructured array
                 
                 let staticAerialHtml = '';
                 if (staticAerialData && staticAerialData.imageUri) {
@@ -1172,6 +1216,13 @@ document.addEventListener("DOMContentLoaded", function() {
                     streetViewHtml = `<img class=\"google-map-media\" src=\"${streetViewData.imageUri}\" alt=\"Street View of ${address}\">`;
                 } else {
                     streetViewHtml = `<p class=\"google-map-error\">Street View not available: ${streetViewData?.error || 'Unknown error'}</p>`;
+                }
+
+                let mapScreenshotHtml = '';
+                if (mapScreenshotData && mapScreenshotData.imageUri) {
+                    mapScreenshotHtml = `<img class=\"google-map-media\" src=\"${mapScreenshotData.imageUri}\" alt=\"Current Map View with Property Outlines\">`;
+                } else {
+                    mapScreenshotHtml = `<p class=\"google-map-error\">Current map view screenshot not available: ${mapScreenshotData?.error || 'Unknown error'}</p>`;
                 }
 
                 const printContent = `
@@ -1255,7 +1306,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             align-items: center;
                             justify-content: center;
                             width: 100%;
-                            max-width: 600px; 
+                            max-width: 800px; 
                             margin: 0 auto 20px auto; 
                             border: 1px solid #eee;
                             background-color: #f9f9f9;
@@ -1263,8 +1314,10 @@ document.addEventListener("DOMContentLoaded", function() {
                         .google-map-media {
                             object-fit: contain; 
                             max-width: 100%;
-                            max-height: 400px; 
+                            max-height: 600px; 
                             display: block; 
+                            image-rendering: -webkit-optimize-contrast;
+                            image-rendering: crisp-edges;
                         }
                         .google-map-error {
                             padding: 20px;
@@ -1305,6 +1358,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     <h2 class="section-title">Street View</h2>
                     <div class="google-map-image-container">
                         ${streetViewHtml}
+                    </div>
+
+                    <h2 class="section-title">Current Map View</h2>
+                    <div class="google-map-image-container">
+                        ${mapScreenshotHtml}
                     </div>
 
                     <h2 class="section-title">Detailed Information</h2>
