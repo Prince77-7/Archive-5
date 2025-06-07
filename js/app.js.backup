@@ -2303,7 +2303,158 @@ document.addEventListener("DOMContentLoaded", function() {
                 });
             }
             
-            // Update remaining basic popup templates with proper field information
+            // Symbol Size Control functionality
+            setupSymbolSizeControl(layerToggles);
+        });
+
+        // Symbol Size Control Setup Function
+        function setupSymbolSizeControl(layerToggles) {
+            const symbolSizeSlider = document.getElementById("symbol-size-slider");
+            const symbolSizeValue = document.getElementById("symbol-size-value");
+            const resetSymbolSizeBtn = document.getElementById("reset-symbol-size");
+            
+            if (!symbolSizeSlider || !symbolSizeValue || !resetSymbolSizeBtn) return;
+            
+            let currentScale = 1.0;
+            const defaultScale = 1.0;
+            
+            // Store original renderer configurations for all layers
+            const originalConfigs = new Map();
+            
+            // Function to store original renderer config
+            function storeOriginalConfig(layer) {
+                if (!originalConfigs.has(layer.id)) {
+                    const renderer = layer.renderer;
+                    if (renderer) {
+                        originalConfigs.set(layer.id, {
+                            renderer: renderer.clone(),
+                            originalRenderer: renderer
+                        });
+                    }
+                }
+            }
+            
+            // Store original configs for all layers
+            layerToggles.forEach(config => {
+                storeOriginalConfig(config.layer);
+            });
+            
+            // Store configs for other layers not in layerToggles
+            storeOriginalConfig(parcelLayer);
+            storeOriginalConfig(towersLayer);
+            storeOriginalConfig(billboardsLayer);
+            
+            // Function to scale renderer symbols
+            function scaleRenderer(renderer, scale) {
+                if (!renderer) return renderer;
+                
+                const newRenderer = renderer.clone();
+                
+                if (newRenderer.type === "simple") {
+                    scaleSymbol(newRenderer.symbol, scale);
+                } else if (newRenderer.type === "unique-value") {
+                    if (newRenderer.defaultSymbol) {
+                        scaleSymbol(newRenderer.defaultSymbol, scale);
+                    }
+                    newRenderer.uniqueValueInfos?.forEach(info => {
+                        scaleSymbol(info.symbol, scale);
+                    });
+                } else if (newRenderer.type === "class-breaks") {
+                    if (newRenderer.defaultSymbol) {
+                        scaleSymbol(newRenderer.defaultSymbol, scale);
+                    }
+                    newRenderer.classBreakInfos?.forEach(info => {
+                        scaleSymbol(info.symbol, scale);
+                    });
+                }
+                
+                return newRenderer;
+            }
+            
+            // Function to scale individual symbols
+            function scaleSymbol(symbol, scale) {
+                if (!symbol) return;
+                
+                if (symbol.type === "simple-marker") {
+                    const originalSize = originalConfigs.get('originalSize_' + symbol.type) || symbol.size || 8;
+                    if (!originalConfigs.has('originalSize_' + symbol.type)) {
+                        originalConfigs.set('originalSize_' + symbol.type, originalSize);
+                    }
+                    symbol.size = originalSize * scale;
+                    
+                    if (symbol.outline && symbol.outline.width) {
+                        const originalOutlineWidth = originalConfigs.get('originalOutlineWidth_' + symbol.type) || symbol.outline.width || 1;
+                        if (!originalConfigs.has('originalOutlineWidth_' + symbol.type)) {
+                            originalConfigs.set('originalOutlineWidth_' + symbol.type, originalOutlineWidth);
+                        }
+                        symbol.outline.width = originalOutlineWidth * scale;
+                    }
+                } else if (symbol.type === "simple-line") {
+                    const originalWidth = originalConfigs.get('originalLineWidth_' + symbol.type) || symbol.width || 1;
+                    if (!originalConfigs.has('originalLineWidth_' + symbol.type)) {
+                        originalConfigs.set('originalLineWidth_' + symbol.type, originalWidth);
+                    }
+                    symbol.width = originalWidth * scale;
+                } else if (symbol.type === "simple-fill") {
+                    if (symbol.outline && symbol.outline.width) {
+                        const originalOutlineWidth = originalConfigs.get('originalFillOutlineWidth_' + symbol.type) || symbol.outline.width || 1;
+                        if (!originalConfigs.has('originalFillOutlineWidth_' + symbol.type)) {
+                            originalConfigs.set('originalFillOutlineWidth_' + symbol.type, originalOutlineWidth);
+                        }
+                        symbol.outline.width = originalOutlineWidth * scale;
+                    }
+                } else if (symbol.type === "text") {
+                    const originalSize = originalConfigs.get('originalTextSize_' + symbol.type) || symbol.font?.size || 12;
+                    if (!originalConfigs.has('originalTextSize_' + symbol.type)) {
+                        originalConfigs.set('originalTextSize_' + symbol.type, originalSize);
+                        if (!symbol.font) symbol.font = {};
+                    }
+                    if (symbol.font) {
+                        symbol.font.size = originalSize * scale;
+                    }
+                }
+            }
+            
+            // Function to update all layer symbols
+            function updateAllSymbolSizes(scale) {
+                layerToggles.forEach(config => {
+                    const originalConfig = originalConfigs.get(config.layer.id);
+                    if (originalConfig && originalConfig.originalRenderer) {
+                        const scaledRenderer = scaleRenderer(originalConfig.originalRenderer, scale);
+                        config.layer.renderer = scaledRenderer;
+                    }
+                });
+                
+                // Update other layers
+                [parcelLayer, towersLayer, billboardsLayer].forEach(layer => {
+                    const originalConfig = originalConfigs.get(layer.id);
+                    if (originalConfig && originalConfig.originalRenderer) {
+                        const scaledRenderer = scaleRenderer(originalConfig.originalRenderer, scale);
+                        layer.renderer = scaledRenderer;
+                    }
+                });
+            }
+            
+            // Slider change event
+            symbolSizeSlider.addEventListener("input", function(e) {
+                currentScale = parseFloat(e.target.value);
+                symbolSizeValue.textContent = currentScale.toFixed(1) + "x";
+                updateAllSymbolSizes(currentScale);
+            });
+            
+            // Reset button event
+            resetSymbolSizeBtn.addEventListener("click", function() {
+                currentScale = defaultScale;
+                symbolSizeSlider.value = defaultScale;
+                symbolSizeValue.textContent = defaultScale.toFixed(1) + "x";
+                updateAllSymbolSizes(currentScale);
+            });
+            
+                        // Initialize display
+            symbolSizeValue.textContent = currentScale.toFixed(1) + "x";
+        }
+             
+        // Update remaining basic popup templates with proper field information
             function updateRemainingPopups() {
                 // Update remaining roadway layers
                 roadwayShoulderLayer.popupTemplate = {
@@ -5169,7 +5320,7 @@ function loadSavedDatasets() {
                          map: currentParcelData.MapNumber, 
                          geometry: geometryToSave // Pass the geometry object
                      });
-            } else {
+                 } else {
                      console.error("Cannot favorite: Geometry data missing.");
                      alert("Could not add favorite: Parcel geometry is missing.");
                  }
@@ -5292,16 +5443,14 @@ function loadSavedDatasets() {
                 }
             });
         }
-    }); // Correct closing for require callback
-
-    // Event Listener for the Clear Cache Button (Outside ArcGIS require callback)
-    const clearCacheButton = document.getElementById("clear-cache-button");
-    if (clearCacheButton) {
-        clearCacheButton.addEventListener("click", function() {
-            console.log("Clear Cache & Reload button clicked.");
-            
-            // Show confirmation warning
-            const confirmMessage = `⚠️ WARNING: This will permanently delete all your saved data including:
+                // Event Listener for the Clear Cache Button
+        const clearCacheButton = document.getElementById("clear-cache-button");
+        if (clearCacheButton) {
+            clearCacheButton.addEventListener("click", function() {
+                console.log("Clear Cache & Reload button clicked.");
+                
+                // Show confirmation warning
+                const confirmMessage = `⚠️ WARNING: This will permanently delete all your saved data including:
 
 • All favorited properties
 • All saved datasets from file uploads
@@ -5310,196 +5459,34 @@ function loadSavedDatasets() {
 
 This action cannot be undone. Are you sure you want to continue?`;
 
-            const userConfirmed = confirm(confirmMessage);
-            
-            if (!userConfirmed) {
-                console.log("User cancelled cache clearing operation.");
-                return; // User cancelled, don't proceed
-            }
+                const userConfirmed = confirm(confirmMessage);
+                
+                if (!userConfirmed) {
+                    console.log("User cancelled cache clearing operation.");
+                    return; // User cancelled, don't proceed
+                }
 
-            try {
-                // Clear localStorage (favorites, saved datasets)
-                localStorage.clear();
-                console.log("localStorage cleared.");
+                try {
+                    // Clear localStorage (favorites, saved datasets)
+                    localStorage.clear();
+                    console.log("localStorage cleared.");
 
-                // Clear sessionStorage (if anything is stored there)
-                sessionStorage.clear();
-                console.log("sessionStorage cleared.");
+                    // Clear sessionStorage (if anything is stored there)
+                    sessionStorage.clear();
+                    console.log("sessionStorage cleared.");
 
-                // Inform the user that data has been cleared
-                alert("✅ Application data successfully cleared. The page will now reload with fresh settings.");
+                    // Inform the user that data has been cleared
+                    alert("✅ Application data successfully cleared. The page will now reload with fresh settings.");
 
-                // Perform a hard reload
-                location.reload(true);
+                    // Perform a hard reload
+                    location.reload(true);
 
-            } catch (e) {
-                console.error("Error during cache clearing or reload:", e);
-                alert("❌ An error occurred while trying to clear data. Please try manually clearing your browser cache or contact support.");
-            }
-        });
-    }
+                } catch (e) {
+                    console.error("Error during cache clearing or reload:", e);
+                    alert("❌ An error occurred while trying to clear data. Please try manually clearing your browser cache or contact support.");
+                }
+            });
+        }
 
+    }); // Correct closing for require callback
 }); // Correct closing for document.addEventListener callback
-
-// Event Listener for the Owner Name Search
-const ownerNameSearchButton = document.getElementById("owner-name-search-button");
-const ownerNameInput = document.getElementById("owner-name-input");
-const ownerPropertyListContainer = document.getElementById("owner-property-list-container");
-
-ownerNameSearchButton.addEventListener('click', () => {
-    const ownerName = ownerNameInput.value.trim();
-    if (!ownerName) { 
-        // Instead of alert, maybe clear the list or show a message?
-        ownerPropertyListContainer.innerHTML = '<div class="search-message">Please enter an owner name.</div>';
-        ownerPropertyListContainer.style.display = 'block'; // Make sure container is visible
-                 return;
-            }
-            
-    const ownerNameUpper = ownerName.toUpperCase();
-    const query = new Query();
-    query.where = `UPPER(OWNNAME) LIKE UPPER('%${ownerNameUpper}%')`;
-    query.returnGeometry = true; // Need geometry to zoom
-    // Ensure we request the necessary fields for display and info
-    query.outFields = [
-        "PARID", "Jur_num", "Jur_stnam", "OWNNAME", "MapNumber", "PropType", "LandUse", 
-        "OWNADDR", "OWNCITY", "OWNSTATE", "OWNZIP", "OWNERNOTES",
-        "Nbhd", "sqft_livingarea", "LandValue", "ImprovementValue", "TotalValue", "LivingUnits"
-     ];
-
-    // Show loading indicator
-    ownerPropertyListContainer.innerHTML = '<div class="loader"></div>';
-
-    // Execute the query
-    parcelLayer.queryFeatures(query)
-        .then(function(results) {
-            if (results.features.length > 0) {
-                // Clear any existing highlights and graphics
-                clearMapGraphics();
-                
-                // Remove any existing property list and toggle button
-                const existingList = document.getElementById('property-list');
-                if (existingList) existingList.remove();
-                const existingToggleButton = document.getElementById('toggle-owner-properties-button');
-                if (existingToggleButton) existingToggleButton.remove();
-                
-                // If multiple properties found
-                if (results.features.length > 1) {
-                    // Create a container for the property list in the sidebar
-                    const propertyListContainer = document.createElement('div');
-                    propertyListContainer.className = 'property-list';
-                    propertyListContainer.id = 'property-list';
-                    
-                    // Sort the features by address for a better list experience
-                    results.features.sort((a, b) => {
-                        const addrA = a.attributes.PAR_ADDR1 || '';
-                        const addrB = b.attributes.PAR_ADDR1 || '';
-                        return addrA.localeCompare(addrB);
-                    });
-                    
-                    // Array to store all graphics for zooming
-                    const allGraphics = [];
-                    
-                    // Process each property
-                    results.features.forEach((feature, index) => {
-                        const propertyNumber = index + 1;
-                        const propertyAddress = feature.attributes.PAR_ADDR1 || 'No Address';
-                        const parcelId = feature.attributes.PARCELID || 'No Parcel ID';
-                        
-                        // 1. Add the parcel polygon highlight
-                        const highlightGraphic = {
-                            geometry: feature.geometry,
-                            symbol: {
-                                type: "simple-fill",
-                                color: [255, 165, 0, 0.2],
-                outline: {
-                                    color: [255, 69, 0, 1],
-                                    width: 1.5
-                                }
-                            },
-                            attributes: feature.attributes
-                        };
-                        highlightGraphicsLayer.add(highlightGraphic);
-                        allGraphics.push(highlightGraphic);
-                        
-                        // 2. Add the numbered marker at the centroid of the parcel
-                        const centroid = feature.geometry.centroid || 
-                                        (feature.geometry.type === "polygon" ? 
-                                        feature.geometry.extent.center : 
-                                        feature.geometry);
-                        
-                        // Create an SVG marker with the property number
-                        const markerSvg = encodeURIComponent(`<svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><circle cx="15" cy="15" r="13" fill="#4dabf7" stroke="white" stroke-width="2"/><text x="15" y="20" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle" fill="white">${propertyNumber}</text></svg>`);
-                        
-                        const markerGraphic = {
-                            geometry: centroid,
-                            symbol: {
-                                type: "picture-marker",
-                                url: `data:image/svg+xml;utf8,${markerSvg}`,
-                                width: 30,
-                                height: 30
-                            },
-                            attributes: {
-                                propertyNumber: propertyNumber,
-                                PARCELID: feature.attributes.PARCELID
-                            }
-                        };
-                        view.graphics.add(markerGraphic);
-                        
-                        // 3. Create list item for the sidebar
-                const listItem = document.createElement('div');
-                listItem.className = 'property-list-item';
-                
-                const numberSpan = document.createElement('span');
-                numberSpan.className = 'property-list-number'; // Style like owner search
-                        numberSpan.textContent = propertyNumber;
-                
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = 'property-list-details';
-                
-                const addressSpan = document.createElement('div');
-                addressSpan.className = 'property-list-address';
-                        addressSpan.textContent = propertyAddress;
-                        
-                        const parcelIdSpan = document.createElement('div');
-                        parcelIdSpan.className = 'property-list-parcel-id'; // Reuse style
-                        parcelIdSpan.textContent = `Parcel: ${parcelId}`;
-                
-                detailsDiv.appendChild(addressSpan);
-                        detailsDiv.appendChild(parcelIdSpan);
-                        
-                        listItem.appendChild(numberSpan);
-                        listItem.appendChild(detailsDiv);
-
-                    // Make list item clickable
-                    listItem.style.cursor = 'pointer';
-                    listItem.addEventListener('click', () => {
-                            displayParcelInfo(feature.attributes, feature.geometry);
-                        });
-                        
-                        // Add list item to the container
-                        propertyListContainer.appendChild(listItem);
-                    });
-                    
-                    // Zoom to the selected property
-                    view.goTo(allGraphics, { padding: 50 })
-                        .then(() => {
-                            // Display message with count and add the property list
-                            ownerPropertyListContainer.innerHTML = `Found ${results.features.length} properties owned by "${ownerName}". Click on a property below or on the map for details.`;
-                            ownerPropertyListContainer.appendChild(propertyListContainer);
-                        });
-            } else {
-                    // If only one property, display its details
-                    displayParcelInfo(results.features[0].attributes, results.features[0].geometry);
-            }
-            } else {
-                // No properties found for this owner
-                ownerPropertyListContainer.innerHTML = `<div class="search-message">No properties found for owner "${ownerName}".</div>`;
-                ownerPropertyListContainer.style.display = 'block'; // Ensure visibility
-            }
-        })
-        .catch(function(error) {
-            console.error("Error searching for owner:", error);
-            ownerPropertyListContainer.innerHTML = '<div class="search-message">Error searching for properties by owner. Please try again.</div>';
-            ownerPropertyListContainer.style.display = 'block'; // Ensure visibility
-        });
-});
