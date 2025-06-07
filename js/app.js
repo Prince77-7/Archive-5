@@ -94,6 +94,7 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             renderer: parcelRenderer,
             title: "Shelby County Parcels",
+            visible: false, // Start hidden - user can toggle on when needed
             popupEnabled: false // We'll handle popups ourselves
         });
 
@@ -109,7 +110,7 @@ document.addEventListener("DOMContentLoaded", function() {
             url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Towers/MapServer/1",
             outFields: ["*"],
             title: "Transmission Towers",
-            visible: true, // Start visible
+            visible: false, // Start hidden - user can toggle on when needed
             popupTemplate: {
                 title: "Transmission Tower",
                 content: [{
@@ -295,8 +296,30 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Base Flood Elevation",
             visible: false,
-            popupTemplate: { title: "Base Flood Elevation", content: "Click for base flood elevation information" },
-            renderer: { type: "simple", symbol: { type: "simple-line", color: [0, 0, 139, 0.8], width: 2 } }
+            popupTemplate: {
+                title: "Base Flood Elevation",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "ELEV", label: "Elevation (ft)" },
+                            { fieldName: "LEN_UNIT", label: "Unit" },
+                            { fieldName: "V_DATUM", label: "Vertical Datum" },
+                            { fieldName: "DFIRM_ID", label: "DFIRM ID" },
+                            { fieldName: "SOURCE_CIT", label: "Source Citation" }
+                        ]
+                    }
+                ]
+            },
+            renderer: { 
+                type: "simple", 
+                symbol: { 
+                    type: "simple-line", 
+                    color: [0, 0, 139, 0.9], 
+                    width: 3,
+                    style: "solid"
+                } 
+            }
         });
 
         const floodZonesLayer = new FeatureLayer({
@@ -304,8 +327,652 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Flood Zones",
             visible: false,
-            popupTemplate: { title: "Flood Zone", content: "Click for flood zone information" },
-            renderer: { type: "simple", symbol: { type: "simple-fill", color: [0, 0, 255, 0.2], outline: { color: [0, 0, 200, 0.8], width: 1 } } }
+            popupTemplate: {
+                title: "Flood Zone - {FLD_ZONE}",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "FLD_ZONE", label: "Flood Zone" },
+                            { fieldName: "ZONE_SUBTY", label: "Zone Type" },
+                            { fieldName: "STATIC_BFE", label: "Base Flood Elevation (ft)" },
+                            { fieldName: "DEPTH", label: "Flood Depth (ft)" },
+                            { fieldName: "VELOCITY", label: "Velocity (fps)" },
+                            { fieldName: "SFHA_TF", label: "Special Flood Hazard Area" },
+                            { fieldName: "STUDY_TYP", label: "Study Type" },
+                            { fieldName: "V_DATUM", label: "Vertical Datum" },
+                            { fieldName: "SOURCE_CIT", label: "Source Citation" }
+                        ]
+                    }
+                ]
+            },
+            renderer: {
+                type: "unique-value",
+                field: "ZONE_SUBTY",
+                defaultSymbol: {
+                    type: "simple-fill",
+                    color: [130, 130, 130, 0.1],
+                    outline: { color: [100, 100, 100, 0.6], width: 1 }
+                },
+                uniqueValueInfos: [
+                    {
+                        value: "FLOODWAY",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [115, 223, 255, 0.4],
+                            outline: { color: [0, 112, 255, 0.8], width: 2 }
+                        }
+                    },
+                    {
+                        value: "0.2 PCT ANNUAL CHANCE FLOOD HAZARD",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [255, 211, 127, 0.3],
+                            outline: { color: [168, 112, 0, 0.8], width: 1 }
+                        }
+                    },
+                    {
+                        value: "AREA WITH REDUCED FLOOD RISK DUE TO LEVEE",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [255, 211, 127, 0.2],
+                            outline: { color: [255, 170, 0, 0.8], width: 1 }
+                        }
+                    },
+                    {
+                        value: "AREA OF MINIMAL FLOOD HAZARD",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [0, 0, 0, 0], // Transparent fill
+                            outline: { color: [0, 0, 0, 0.3], width: 1 }
+                        }
+                    },
+                    {
+                        value: " ", // Floodplain (space character)
+                        symbol: {
+                            type: "simple-fill",
+                            color: [85, 255, 0, 0.15],
+                            outline: { color: [85, 255, 0, 0.6], width: 1 }
+                        }
+                    }
+                ]
+            }
+        });
+
+        // Create Benchmarks layer
+        const benchmarksLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Benchmarks/MapServer/0",
+            outFields: ["*"],
+            title: "Benchmarks",
+            visible: false,
+            popupTemplate: {
+                title: "Survey Benchmark - {NAME}",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "NAME", label: "Name" },
+                            { fieldName: "Elev_Ft", label: "Elevation (ft)" },
+                            { fieldName: "Elev_M", label: "Elevation (m)" },
+                            { fieldName: "PID", label: "Point ID" },
+                            { fieldName: "DEC_LAT", label: "Latitude" },
+                            { fieldName: "DEC_LON", label: "Longitude" },
+                            { fieldName: "POS_DATUM", label: "Position Datum" },
+                            { fieldName: "VERT_DATUM", label: "Vertical Datum" },
+                            { fieldName: "DATA_SRCE", label: "Data Source" }
+                        ]
+                    }
+                ]
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-marker",
+                    size: 8,
+                    color: [0, 0, 139, 0.8], // Dark blue for survey benchmarks
+                    outline: {
+                        color: [255, 255, 255, 0.8],
+                        width: 1
+                    },
+                    style: "diamond"
+                }
+            }
+        });
+
+        // Create Cultural Resources sublayers
+        const culturalHistoricCemeteriesLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/CulturalResources/MapServer/0",
+            outFields: ["*"],
+            title: "Historic Cemeteries",
+            visible: false,
+            popupTemplate: {
+                title: "Historic Cemetery - {Name}",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "Name", label: "Name" },
+                            { fieldName: "ALTNAME", label: "Alternative Name" },
+                            { fieldName: "TYPE", label: "Type" },
+                            { fieldName: "PARCELID", label: "Parcel ID" },
+                            { fieldName: "Location", label: "Location" },
+                            { fieldName: "Vol", label: "Volume" }
+                        ]
+                    }
+                ]
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-marker",
+                    size: 10,
+                    color: [139, 69, 19, 0.8], // Brown for historic cemeteries
+                    outline: {
+                        color: [255, 255, 255, 0.8],
+                        width: 1
+                    },
+                    style: "cross"
+                }
+            }
+        });
+
+        const culturalHistoricCommunitiesLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/CulturalResources/MapServer/1",
+            outFields: ["*"],
+            title: "Historic Communities",
+            visible: false,
+            popupTemplate: {
+                title: "Historic Community",
+                content: "Click for historic community information"
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-fill",
+                    color: [160, 82, 45, 0.3], // Light brown fill
+                    outline: {
+                        color: [139, 69, 19, 0.8],
+                        width: 2
+                    }
+                }
+            }
+        });
+
+        const culturalHistoricalMarkersLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/CulturalResources/MapServer/2",
+            outFields: ["*"],
+            title: "Historical Markers",
+            visible: false,
+            popupTemplate: {
+                title: "Historical Marker",
+                content: "Click for historical marker information"
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-marker",
+                    size: 10,
+                    color: [218, 165, 32, 0.8], // Goldenrod for historical markers
+                    outline: {
+                        color: [255, 255, 255, 0.8],
+                        width: 1
+                    },
+                    style: "square"
+                }
+            }
+        });
+
+        const culturalCemeteryLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/CulturalResources/MapServer/3",
+            outFields: ["*"],
+            title: "Cemetery",
+            visible: false,
+            popupTemplate: {
+                title: "Cemetery",
+                content: "Click for cemetery information"
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-marker",
+                    size: 8,
+                    color: [105, 105, 105, 0.8], // Dim gray for cemeteries
+                    outline: {
+                        color: [255, 255, 255, 0.8],
+                        width: 1
+                    },
+                    style: "cross"
+                }
+            }
+        });
+
+        const culturalLandmarkDistrictsLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/CulturalResources/MapServer/4",
+            outFields: ["*"],
+            title: "Landmark Districts",
+            visible: false,
+            popupTemplate: {
+                title: "Landmark District",
+                content: "Click for landmark district information"
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-fill",
+                    color: [255, 215, 0, 0.2], // Light gold fill
+                    outline: {
+                        color: [218, 165, 32, 0.8],
+                        width: 2
+                    }
+                }
+            }
+        });
+
+        // Create Contour layer
+        const contourLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Contour1ft/MapServer/0",
+            outFields: ["*"],
+            title: "Contour Lines (1ft)",
+            visible: false,
+            popupTemplate: {
+                title: "Contour Line",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "Contour", label: "Elevation (ft)" }
+                        ]
+                    }
+                ]
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-line",
+                    color: [115, 76, 0, 0.6], // Brown contour lines
+                    width: 0.5,
+                    style: "solid"
+                }
+            }
+        });
+
+        // Create Industrial sublayers
+        const industrialMinorLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Industrial/MapServer/0",
+            outFields: ["*"],
+            title: "Industrial Minor",
+            visible: false,
+            popupTemplate: {
+                title: "Industrial Structure",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "FCODE", label: "Feature Code" },
+                            { fieldName: "Originator", label: "Originator" },
+                            { fieldName: "StrucHeight", label: "Structure Height" },
+                            { fieldName: "BaseElevation", label: "Base Elevation" },
+                            { fieldName: "TopElevation", label: "Top Elevation" },
+                            { fieldName: "OrigDate", label: "Origin Date" }
+                        ]
+                    }
+                ]
+            },
+            renderer: {
+                type: "unique-value",
+                field: "FCODE",
+                uniqueValueInfos: [
+                    {
+                        value: 513,
+                        symbol: {
+                            type: "simple-marker",
+                            size: 8,
+                            color: [128, 128, 128, 0.8], // Gray for silos
+                            outline: { color: [255, 255, 255, 0.8], width: 1 },
+                            style: "circle"
+                        }
+                    },
+                    {
+                        value: 516,
+                        symbol: {
+                            type: "simple-marker",
+                            size: 8,
+                            color: [255, 69, 0, 0.8], // Red-orange for smokestacks
+                            outline: { color: [255, 255, 255, 0.8], width: 1 },
+                            style: "circle"
+                        }
+                    },
+                    {
+                        value: 519,
+                        symbol: {
+                            type: "simple-marker",
+                            size: 8,
+                            color: [0, 191, 255, 0.8], // Deep sky blue for windmills
+                            outline: { color: [255, 255, 255, 0.8], width: 1 },
+                            style: "circle"
+                        }
+                    }
+                ]
+            }
+        });
+
+        const industrialMajorLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Industrial/MapServer/1",
+            outFields: ["*"],
+            title: "Industrial Major",
+            visible: false,
+            popupTemplate: {
+                title: "Major Industrial Structure",
+                content: "Click for major industrial structure information"
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-marker",
+                    size: 12,
+                    color: [105, 105, 105, 0.8], // Dim gray for major industrial
+                    outline: {
+                        color: [255, 255, 255, 0.8],
+                        width: 2
+                    },
+                    style: "square"
+                }
+            }
+        });
+
+        // Create Drainage Basins sublayers
+        const drainageFemaLomrLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/DrainageBasins/MapServer/0",
+            outFields: ["*"],
+            title: "FEMA LOMR",
+            visible: false,
+            popupTemplate: {
+                title: "FEMA Letter of Map Revision",
+                content: "Click for FEMA LOMR information"
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-fill",
+                    color: [255, 0, 0, 0.3], // Red for FEMA revisions
+                    outline: {
+                        color: [255, 0, 0, 0.8],
+                        width: 2
+                    }
+                }
+            }
+        });
+
+        const drainageFirmPanelsLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/DrainageBasins/MapServer/1",
+            outFields: ["*"],
+            title: "FIRM Panels",
+            visible: false,
+            popupTemplate: {
+                title: "FIRM Panel",
+                content: "Click for FIRM panel information"
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-fill",
+                    color: [0, 0, 0, 0], // Transparent fill
+                    outline: {
+                        color: [0, 0, 0, 0.6],
+                        width: 1,
+                        style: "dash"
+                    }
+                }
+            }
+        });
+
+        const drainageSensitiveBasinsLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/DrainageBasins/MapServer/2",
+            outFields: ["*"],
+            title: "Sensitive Drainage Basins",
+            visible: false,
+            popupTemplate: {
+                title: "Sensitive Drainage Basin - {BASIN}",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "BASIN", label: "Basin Name" },
+                            { fieldName: "ID", label: "Basin ID" },
+                            { fieldName: "PRIORITY", label: "Priority Level" },
+                            { fieldName: "SENSITIVIT", label: "Sensitivity Level" }
+                        ]
+                    }
+                ]
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-fill",
+                    color: [255, 255, 0, 0.4], // Bright yellow for sensitive areas
+                    outline: {
+                        color: [255, 165, 0, 0.8],
+                        width: 2
+                    }
+                }
+            }
+        });
+
+        const drainageBasinsLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/DrainageBasins/MapServer/3",
+            outFields: ["*"],
+            title: "Drainage Basins",
+            visible: false,
+            popupTemplate: {
+                title: "Drainage Basin - {BASIN}",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "BASIN", label: "Basin Name" },
+                            { fieldName: "ID", label: "Basin ID" },
+                            { fieldName: "PRIORITY", label: "Priority Level" },
+                            { fieldName: "SENSITIVIT", label: "Sensitivity Level" }
+                        ]
+                    }
+                ]
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-fill",
+                    color: [0, 0, 0, 0], // Transparent fill
+                    outline: {
+                        color: [0, 112, 255, 0.8],
+                        width: 2
+                    }
+                }
+            }
+        });
+
+        // Create Corporate Boundaries layer
+        const corporateBoundariesLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/CorporateBoundaries/MapServer/0",
+            outFields: ["*"],
+            title: "Municipal Boundaries",
+            visible: false,
+            popupTemplate: {
+                title: "Municipal Boundary - {City}",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "City", label: "Municipality" }
+                        ]
+                    }
+                ]
+            },
+            renderer: {
+                type: "unique-value",
+                field: "City",
+                defaultSymbol: {
+                    type: "simple-fill",
+                    color: [128, 128, 128, 0.2],
+                    outline: { color: [0, 0, 0, 0.8], width: 2 }
+                },
+                uniqueValueInfos: [
+                    {
+                        value: "Memphis",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [252, 207, 245, 0.3], // Light pink for Memphis
+                            outline: { color: [255, 20, 147, 0.8], width: 3 }
+                        }
+                    },
+                    {
+                        value: "Germantown",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [197, 239, 252, 0.3], // Light blue for Germantown
+                            outline: { color: [0, 149, 255, 0.8], width: 2 }
+                        }
+                    },
+                    {
+                        value: "Collierville",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [252, 241, 215, 0.3], // Light orange for Collierville
+                            outline: { color: [255, 140, 0, 0.8], width: 2 }
+                        }
+                    },
+                    {
+                        value: "Bartlett",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [215, 221, 252, 0.3], // Light purple for Bartlett
+                            outline: { color: [138, 43, 226, 0.8], width: 2 }
+                        }
+                    },
+                    {
+                        value: "Arlington",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [179, 252, 222, 0.3], // Light green for Arlington
+                            outline: { color: [0, 255, 127, 0.8], width: 2 }
+                        }
+                    },
+                    {
+                        value: "Lakeland",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [251, 179, 252, 0.3], // Light magenta for Lakeland
+                            outline: { color: [255, 0, 255, 0.8], width: 2 }
+                        }
+                    },
+                    {
+                        value: "Millington",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [192, 193, 252, 0.3], // Light blue-purple for Millington
+                            outline: { color: [75, 0, 130, 0.8], width: 2 }
+                        }
+                    }
+                ]
+            }
+        });
+
+        // Create Foreclosures layer
+        const foreclosuresLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Foreclosures/MapServer/0",
+            outFields: ["*"],
+            title: "Foreclosures",
+            visible: false,
+            popupTemplate: {
+                title: "Foreclosure Property",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "PARID", label: "Parcel ID" },
+                            { fieldName: "PRICE", label: "Sale Price ($)" },
+                            { fieldName: "SALEDT", label: "Sale Date" },
+                            { fieldName: "INSTRTYP", label: "Instrument Type" },
+                            { fieldName: "OWN1", label: "Owner" },
+                            { fieldName: "ADDR1", label: "Property Address" },
+                            { fieldName: "ADDR3", label: "City, State" },
+                            { fieldName: "ZIP1", label: "ZIP Code" }
+                        ]
+                    }
+                ]
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-fill",
+                    color: [255, 69, 0, 0.6], // Red-orange for foreclosures (attention-grabbing)
+                    outline: {
+                        color: [139, 0, 0, 0.9],
+                        width: 2
+                    }
+                }
+            }
+        });
+
+        // Create Building layer
+        const buildingLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Building/MapServer/0",
+            outFields: ["*"],
+            title: "Building Footprints",
+            visible: false,
+            popupTemplate: {
+                title: "Building",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "FCODE", label: "Feature Code" },
+                            { fieldName: "BldgClass", label: "Building Class" },
+                            { fieldName: "StrucType", label: "Structure Type" },
+                            { fieldName: "StrucHeight", label: "Structure Height" },
+                            { fieldName: "BaseElevation", label: "Base Elevation" },
+                            { fieldName: "TopElevation", label: "Top Elevation" },
+                            { fieldName: "LandUse", label: "Land Use" },
+                            { fieldName: "YearBuilt", label: "Year Built" },
+                            { fieldName: "YearDemo", label: "Year Demolished" }
+                        ]
+                    }
+                ]
+            },
+            renderer: {
+                type: "unique-value",
+                field: "FCODE",
+                defaultSymbol: {
+                    type: "simple-fill",
+                    color: [190, 190, 190, 0.7],
+                    outline: { color: [0, 0, 0, 0.5], width: 0.5 }
+                },
+                uniqueValueInfos: [
+                    {
+                        value: 704, // Building >5 per side
+                        symbol: {
+                            type: "simple-fill",
+                            color: [70, 130, 180, 0.7], // Steel blue for large buildings
+                            outline: { color: [25, 25, 112, 0.8], width: 1 }
+                        }
+                    },
+                    {
+                        value: 707, // Building <5 per side
+                        symbol: {
+                            type: "simple-fill",
+                            color: [176, 196, 222, 0.6], // Light steel blue for small buildings
+                            outline: { color: [70, 130, 180, 0.7], width: 0.5 }
+                        }
+                    },
+                    {
+                        value: 710, // Ruin
+                        symbol: {
+                            type: "simple-fill",
+                            color: [139, 69, 19, 0.5], // Saddle brown for ruins
+                            outline: { color: [160, 82, 45, 0.8], width: 1 }
+                        }
+                    }
+                ]
+            }
         });
         
         // Add the parcel layer to the map
@@ -337,6 +1004,38 @@ document.addEventListener("DOMContentLoaded", function() {
         // Add flood zone sublayers
         map.add(floodElevationLayer);
         map.add(floodZonesLayer);
+        
+        // Add new service layers
+        map.add(benchmarksLayer);
+        
+        // Add cultural resources sublayers
+        map.add(culturalHistoricCemeteriesLayer);
+        map.add(culturalHistoricCommunitiesLayer);
+        map.add(culturalHistoricalMarkersLayer);
+        map.add(culturalCemeteryLayer);
+        map.add(culturalLandmarkDistrictsLayer);
+        
+        // Add contour layer
+        map.add(contourLayer);
+        
+        // Add industrial sublayers
+        map.add(industrialMinorLayer);
+        map.add(industrialMajorLayer);
+        
+        // Add drainage basins sublayers
+        map.add(drainageFemaLomrLayer);
+        map.add(drainageFirmPanelsLayer);
+        map.add(drainageSensitiveBasinsLayer);
+        map.add(drainageBasinsLayer);
+        
+        // Add municipal boundaries layer
+        map.add(corporateBoundariesLayer);
+        
+        // Add foreclosures layer
+        map.add(foreclosuresLayer);
+        
+        // Add building layer
+        map.add(buildingLayer);
 
         // Layer for highlighting selected parcels
         highlightGraphicsLayer = new GraphicsLayer(); // Initialize here
@@ -530,6 +1229,141 @@ document.addEventListener("DOMContentLoaded", function() {
                         </div>
                     </div>
                 </div>
+                
+                <div class="layer-item">
+                    <label class="layer-checkbox-container">
+                        <input type="checkbox" id="benchmarks-toggle">
+                        <span class="checkmark"></span>
+                        <span class="layer-label">Survey Benchmarks</span>
+                    </label>
+                </div>
+                
+                <div class="layer-group">
+                    <div class="layer-group-header">Cultural Resources</div>
+                    <div class="layer-sublayers">
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="cultural-historic-cemeteries-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Historic Cemeteries</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="cultural-historic-communities-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Historic Communities</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="cultural-historical-markers-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Historical Markers</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="cultural-cemetery-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Cemetery</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="cultural-landmark-districts-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Landmark Districts</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="layer-item">
+                    <label class="layer-checkbox-container">
+                        <input type="checkbox" id="contour-toggle">
+                        <span class="checkmark"></span>
+                        <span class="layer-label">Contour Lines (1ft)</span>
+                    </label>
+                </div>
+                
+                <div class="layer-group">
+                    <div class="layer-group-header">Industrial Layers</div>
+                    <div class="layer-sublayers">
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="industrial-minor-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Industrial Minor</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="industrial-major-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Industrial Major</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="layer-group">
+                    <div class="layer-group-header">Drainage & Water</div>
+                    <div class="layer-sublayers">
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="drainage-fema-lomr-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">FEMA LOMR</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="drainage-firm-panels-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">FIRM Panels</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="drainage-sensitive-basins-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Sensitive Drainage Basins</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="drainage-basins-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Drainage Basins</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="layer-item">
+                    <label class="layer-checkbox-container">
+                        <input type="checkbox" id="corporate-boundaries-toggle">
+                        <span class="checkmark"></span>
+                        <span class="layer-label">Municipal Boundaries</span>
+                    </label>
+                </div>
+                
+                <div class="layer-item">
+                    <label class="layer-checkbox-container">
+                        <input type="checkbox" id="foreclosures-toggle">
+                        <span class="checkmark"></span>
+                        <span class="layer-label">Foreclosures</span>
+                    </label>
+                </div>
+                
+                <div class="layer-item">
+                    <label class="layer-checkbox-container">
+                        <input type="checkbox" id="building-toggle">
+                        <span class="checkmark"></span>
+                        <span class="layer-label">Building Footprints</span>
+                    </label>
+                </div>
             </div>
         `;
 
@@ -541,6 +1375,138 @@ document.addEventListener("DOMContentLoaded", function() {
             expandTooltip: "Toggle Map Layers"
         });
         view.ui.add(layerExpand, "top-right");
+
+        // Loading indicator management
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const loadingText = document.getElementById('loading-text');
+        let activeLoadingLayers = new Set();
+        
+        function showLoadingIndicator(layerName) {
+            activeLoadingLayers.add(layerName);
+            loadingText.textContent = `Loading ${layerName}...`;
+            loadingIndicator.classList.remove('hidden');
+        }
+        
+        function hideLoadingIndicator(layerName) {
+            activeLoadingLayers.delete(layerName);
+            if (activeLoadingLayers.size === 0) {
+                loadingIndicator.classList.add('hidden');
+            } else {
+                // Show the first remaining loading layer
+                const remainingLayer = Array.from(activeLoadingLayers)[0];
+                loadingText.textContent = `Loading ${remainingLayer}...`;
+            }
+        }
+        
+        // Function to add loading listeners to a layer
+        function addLoadingListeners(layer, displayName) {
+            const layerView = view.whenLayerView(layer);
+            
+            layerView.then((lv) => {
+                // Watch for updating state
+                lv.watch('updating', (updating) => {
+                    if (updating && layer.visible) {
+                        showLoadingIndicator(displayName);
+                    } else {
+                        hideLoadingIndicator(displayName);
+                    }
+                });
+                
+                // Check if layer loads any features when made visible
+                layer.watch('visible', (visible) => {
+                    if (visible) {
+                        // Check if the layer actually has features in the current view
+                        setTimeout(() => {
+                            lv.queryFeatures({
+                                geometry: view.extent,
+                                spatialRelationship: "intersects",
+                                returnGeometry: false,
+                                outFields: ["*"],
+                                maxRecordCount: 1
+                            }).then((result) => {
+                                if (result.features.length === 0) {
+                                    console.warn(`⚠️ Layer "${displayName}" is enabled but shows no features in current view. This may be normal if zoomed out or in area with no data.`);
+                                } else {
+                                    console.log(`✅ Layer "${displayName}" loaded ${result.features.length > 0 ? 'successfully' : 'with no visible features'}`);
+                                }
+                            }).catch((error) => {
+                                console.error(`❌ Layer "${displayName}" failed to query features:`, error);
+                                console.error(`Layer URL: ${layer.url}`);
+                            });
+                        }, 2000); // Wait 2 seconds for layer to settle
+                    }
+                });
+                
+            }).catch((error) => {
+                console.error(`❌ Layer "${displayName}" failed to create layer view:`, error);
+                console.error(`Layer URL: ${layer.url}`);
+                hideLoadingIndicator(displayName);
+            });
+        }
+        
+        // Function to test all layers and report their status
+        function testAllLayers() {
+            console.log("🔍 Testing all layers for functionality...");
+            const allLayers = [
+                { layer: parcelLayer, name: "Property Parcels" },
+                { layer: towersLayer, name: "Transmission Towers" },
+                { layer: billboardsLayer, name: "Billboards" },
+                { layer: roadwayAlleyLayer, name: "Alleys" },
+                { layer: roadwayBridgesLayer, name: "Bridges" },
+                { layer: roadwayDrivesLayer, name: "Drives" },
+                { layer: roadwayMedianLayer, name: "Medians" },
+                { layer: roadwayMainLayer, name: "Roadways" },
+                { layer: roadwayParkingLayer, name: "Parking" },
+                { layer: roadwayShoulderLayer, name: "Shoulders" },
+                { layer: roadwayUnpavedLayer, name: "Unpaved Roads" },
+                { layer: recreationAthleticFieldLayer, name: "Athletic Fields" },
+                { layer: recreationTrackLayer, name: "Athletic Tracks" },
+                { layer: recreationCourtsLayer, name: "Courts" },
+                { layer: recreationGolfLayer, name: "Golf Courses" },
+                { layer: recreationPublicLayer, name: "Public Recreation" },
+                { layer: floodElevationLayer, name: "Base Flood Elevation" },
+                { layer: floodZonesLayer, name: "Flood Zones" },
+                { layer: benchmarksLayer, name: "Benchmarks" },
+                { layer: culturalHistoricCemeteriesLayer, name: "Historic Cemeteries" },
+                { layer: culturalHistoricCommunitiesLayer, name: "Historic Communities" },
+                { layer: culturalHistoricalMarkersLayer, name: "Historical Markers" },
+                { layer: culturalCemeteryLayer, name: "Cemeteries" },
+                { layer: culturalLandmarkDistrictsLayer, name: "Landmark Districts" },
+                { layer: contourLayer, name: "Contour Lines" },
+                { layer: industrialMinorLayer, name: "Industrial Minor" },
+                { layer: industrialMajorLayer, name: "Industrial Major" },
+                { layer: drainageFemaLomrLayer, name: "FEMA LOMR" },
+                { layer: drainageFirmPanelsLayer, name: "FIRM Panels" },
+                { layer: drainageSensitiveBasinsLayer, name: "Sensitive Drainage Basins" },
+                { layer: drainageBasinsLayer, name: "Drainage Basins" },
+                { layer: corporateBoundariesLayer, name: "Municipal Boundaries" },
+                { layer: foreclosuresLayer, name: "Foreclosures" },
+                { layer: buildingLayer, name: "Building Footprints" }
+            ];
+            
+            // Expose the test function globally for manual testing
+            window.testLayers = () => {
+                allLayers.forEach(({ layer, name }) => {
+                    layer.queryFeatures({
+                        where: "1=1",
+                        returnGeometry: false,
+                        outFields: ["*"],
+                        maxRecordCount: 1
+                    }).then((result) => {
+                        if (result.features.length === 0) {
+                            console.warn(`⚠️ "${name}" has no features (URL: ${layer.url})`);
+                        } else {
+                            console.log(`✅ "${name}" has features available`);
+                        }
+                    }).catch((error) => {
+                        console.error(`❌ "${name}" failed query test:`, error.message);
+                        console.error(`   URL: ${layer.url}`);
+                    });
+                });
+            };
+            
+            console.log("📝 Test function available as window.testLayers() - call it in console to test all layers");
+        }
 
         // Setup layer control event listeners after view is ready
         view.when(() => {
@@ -570,8 +1536,89 @@ document.addEventListener("DOMContentLoaded", function() {
                 
                 // Flood zone sublayers
                 { toggle: "flood-elevation-toggle", layer: floodElevationLayer, sidebar: "sidebar-flood-elevation-toggle" },
-                { toggle: "flood-zones-toggle", layer: floodZonesLayer, sidebar: "sidebar-flood-zones-toggle" }
+                { toggle: "flood-zones-toggle", layer: floodZonesLayer, sidebar: "sidebar-flood-zones-toggle" },
+                
+                // Benchmarks layer
+                { toggle: "benchmarks-toggle", layer: benchmarksLayer, sidebar: "sidebar-benchmarks-toggle" },
+                
+                // Cultural resources sublayers
+                { toggle: "cultural-historic-cemeteries-toggle", layer: culturalHistoricCemeteriesLayer, sidebar: "sidebar-cultural-historic-cemeteries-toggle" },
+                { toggle: "cultural-historic-communities-toggle", layer: culturalHistoricCommunitiesLayer, sidebar: "sidebar-cultural-historic-communities-toggle" },
+                { toggle: "cultural-historical-markers-toggle", layer: culturalHistoricalMarkersLayer, sidebar: "sidebar-cultural-historical-markers-toggle" },
+                { toggle: "cultural-cemetery-toggle", layer: culturalCemeteryLayer, sidebar: "sidebar-cultural-cemetery-toggle" },
+                { toggle: "cultural-landmark-districts-toggle", layer: culturalLandmarkDistrictsLayer, sidebar: "sidebar-cultural-landmark-districts-toggle" },
+                
+                // Contour layer
+                { toggle: "contour-toggle", layer: contourLayer, sidebar: "sidebar-contour-toggle" },
+                
+                // Industrial sublayers
+                { toggle: "industrial-minor-toggle", layer: industrialMinorLayer, sidebar: "sidebar-industrial-minor-toggle" },
+                { toggle: "industrial-major-toggle", layer: industrialMajorLayer, sidebar: "sidebar-industrial-major-toggle" },
+                
+                // Drainage basins sublayers
+                { toggle: "drainage-fema-lomr-toggle", layer: drainageFemaLomrLayer, sidebar: "sidebar-drainage-fema-lomr-toggle" },
+                { toggle: "drainage-firm-panels-toggle", layer: drainageFirmPanelsLayer, sidebar: "sidebar-drainage-firm-panels-toggle" },
+                { toggle: "drainage-sensitive-basins-toggle", layer: drainageSensitiveBasinsLayer, sidebar: "sidebar-drainage-sensitive-basins-toggle" },
+                { toggle: "drainage-basins-toggle", layer: drainageBasinsLayer, sidebar: "sidebar-drainage-basins-toggle" },
+                
+                // Municipal boundaries layer
+                { toggle: "corporate-boundaries-toggle", layer: corporateBoundariesLayer, sidebar: "sidebar-corporate-boundaries-toggle" },
+                
+                // Foreclosures layer
+                { toggle: "foreclosures-toggle", layer: foreclosuresLayer, sidebar: "sidebar-foreclosures-toggle" },
+                
+                // Building layer
+                { toggle: "building-toggle", layer: buildingLayer, sidebar: "sidebar-building-toggle" }
             ];
+
+            // Initialize checkboxes to match layer visibility states
+            layerToggles.forEach(config => {
+                const toggle = document.getElementById(config.toggle);
+                const sidebarToggle = document.getElementById(config.sidebar);
+                
+                if (toggle) {
+                    toggle.checked = config.layer.visible;
+                }
+                if (sidebarToggle) {
+                    sidebarToggle.checked = config.layer.visible;
+                }
+            });
+
+            // Add loading listeners to all layers
+            addLoadingListeners(parcelLayer, "Property Parcels");
+            addLoadingListeners(towersLayer, "Transmission Towers");
+            addLoadingListeners(billboardsLayer, "Billboards");
+            addLoadingListeners(roadwayAlleyLayer, "Alleys");
+            addLoadingListeners(roadwayBridgesLayer, "Bridges");
+            addLoadingListeners(roadwayDrivesLayer, "Drives");
+            addLoadingListeners(roadwayMedianLayer, "Medians");
+            addLoadingListeners(roadwayMainLayer, "Roadways");
+            addLoadingListeners(roadwayParkingLayer, "Parking");
+            addLoadingListeners(roadwayShoulderLayer, "Shoulders");
+            addLoadingListeners(roadwayUnpavedLayer, "Unpaved Roads");
+            addLoadingListeners(recreationAthleticFieldLayer, "Athletic Fields");
+            addLoadingListeners(recreationTrackLayer, "Athletic Tracks");
+            addLoadingListeners(recreationCourtsLayer, "Courts");
+            addLoadingListeners(recreationGolfLayer, "Golf Courses");
+            addLoadingListeners(recreationPublicLayer, "Public Recreation");
+            addLoadingListeners(floodElevationLayer, "Base Flood Elevation");
+            addLoadingListeners(floodZonesLayer, "Flood Zones");
+            addLoadingListeners(benchmarksLayer, "Benchmarks");
+            addLoadingListeners(culturalHistoricCemeteriesLayer, "Historic Cemeteries");
+            addLoadingListeners(culturalHistoricCommunitiesLayer, "Historic Communities");
+            addLoadingListeners(culturalHistoricalMarkersLayer, "Historical Markers");
+            addLoadingListeners(culturalCemeteryLayer, "Cemeteries");
+            addLoadingListeners(culturalLandmarkDistrictsLayer, "Landmark Districts");
+            addLoadingListeners(contourLayer, "Contour Lines");
+            addLoadingListeners(industrialMinorLayer, "Industrial Minor");
+            addLoadingListeners(industrialMajorLayer, "Industrial Major");
+            addLoadingListeners(drainageFemaLomrLayer, "FEMA LOMR");
+            addLoadingListeners(drainageFirmPanelsLayer, "FIRM Panels");
+            addLoadingListeners(drainageSensitiveBasinsLayer, "Sensitive Drainage Basins");
+            addLoadingListeners(drainageBasinsLayer, "Drainage Basins");
+            addLoadingListeners(corporateBoundariesLayer, "Municipal Boundaries");
+            addLoadingListeners(foreclosuresLayer, "Foreclosures");
+            addLoadingListeners(buildingLayer, "Building Footprints");
 
             // Setup expandable widget toggles
             layerToggles.forEach(config => {
@@ -614,6 +1661,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 });
             }
+            
+            // Initialize testing functionality after a delay to allow layers to load
+            setTimeout(() => {
+                testAllLayers();
+            }, 3000);
         });
 
         // Create fullscreen toggle button for the map

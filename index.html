@@ -23,6 +23,14 @@
         </header>
         <div id="main-content">
             <div id="viewDiv"></div>
+    
+    <!-- Loading Indicator -->
+    <div id="loading-indicator" class="loading-indicator hidden">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <span id="loading-text">Loading layers...</span>
+        </div>
+    </div>
             <div id="sidebar">
                 <div id="search-container">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -239,6 +247,146 @@
                                     </label>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <!-- Benchmarks -->
+                        <div class="sidebar-layer-item">
+                            <label class="sidebar-layer-checkbox-container">
+                                <input type="checkbox" id="sidebar-benchmarks-toggle">
+                                <span class="sidebar-checkmark"></span>
+                                <span class="sidebar-layer-label">Survey Benchmarks</span>
+                            </label>
+                        </div>
+                        
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-layer-group-header">Cultural Resources</div>
+                            <div class="sidebar-layer-sublayers">
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-cultural-historic-cemeteries-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Historic Cemeteries</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-cultural-historic-communities-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Historic Communities</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-cultural-historical-markers-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Historical Markers</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-cultural-cemetery-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Cemetery</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-cultural-landmark-districts-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Landmark Districts</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Contour Lines -->
+                        <div class="sidebar-layer-item">
+                            <label class="sidebar-layer-checkbox-container">
+                                <input type="checkbox" id="sidebar-contour-toggle">
+                                <span class="sidebar-checkmark"></span>
+                                <span class="sidebar-layer-label">Contour Lines (1ft)</span>
+                            </label>
+                        </div>
+                        
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-layer-group-header">Industrial Layers</div>
+                            <div class="sidebar-layer-sublayers">
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-industrial-minor-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Industrial Minor</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-industrial-major-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Industrial Major</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-layer-group-header">Drainage & Water</div>
+                            <div class="sidebar-layer-sublayers">
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-drainage-fema-lomr-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">FEMA LOMR</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-drainage-firm-panels-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">FIRM Panels</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-drainage-sensitive-basins-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Sensitive Drainage Basins</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-drainage-basins-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Drainage Basins</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Municipal Boundaries -->
+                        <div class="sidebar-layer-item">
+                            <label class="sidebar-layer-checkbox-container">
+                                <input type="checkbox" id="sidebar-corporate-boundaries-toggle">
+                                <span class="sidebar-checkmark"></span>
+                                <span class="sidebar-layer-label">Municipal Boundaries</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Foreclosures -->
+                        <div class="sidebar-layer-item">
+                            <label class="sidebar-layer-checkbox-container">
+                                <input type="checkbox" id="sidebar-foreclosures-toggle">
+                                <span class="sidebar-checkmark"></span>
+                                <span class="sidebar-layer-label">Foreclosures</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Building Footprints -->
+                        <div class="sidebar-layer-item">
+                            <label class="sidebar-layer-checkbox-container">
+                                <input type="checkbox" id="sidebar-building-toggle">
+                                <span class="sidebar-checkmark"></span>
+                                <span class="sidebar-layer-label">Building Footprints</span>
+                            </label>
                         </div>
                     </div>
                 </div>
