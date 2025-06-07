@@ -3845,6 +3845,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Handle map clicks to identify parcels
         view.on("click", function(event) {
+            // Check if the parcel layer is enabled before loading parcel info
+            if (!parcelLayer.visible) {
+                // If parcel layer is not visible, show a message indicating this
+                instructions.textContent = "Enable the Property Parcels layer to view parcel information when clicking on the map.";
+                instructions.classList.remove("hidden");
+                parcelDetails.classList.add("hidden");
+                parcelTabs.classList.add("hidden");
+                reportContainer.classList.add("hidden");
+                return; // Exit early without executing the identify task
+            }
+            
             // Show loading indicator or feedback that something is happening
             instructions.textContent = "Loading parcel information...";
             
