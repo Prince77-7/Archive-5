@@ -177,7 +177,18 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Alley",
             visible: false,
-            popupTemplate: { title: "Alley", content: "Click for alley information" },
+            popupTemplate: {
+                title: "Alley",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "FCODE", label: "Feature Code" },
+                        { fieldName: "Originator", label: "Created By" },
+                        { fieldName: "OrigDate", label: "Created Date" },
+                        { fieldName: "Shape.STLength()", label: "Length (ft)", format: { digitSeparator: true, places: 1 } }
+                    ]
+                }]
+            },
             renderer: { type: "simple", symbol: { type: "simple-line", color: [128, 128, 128, 0.7], width: 1 } }
         });
 
@@ -186,7 +197,18 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Bridges",
             visible: false,
-            popupTemplate: { title: "Bridge", content: "Click for bridge information" },
+            popupTemplate: {
+                title: "Bridge",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "FCODE", label: "Feature Code" },
+                        { fieldName: "Originator", label: "Created By" },
+                        { fieldName: "OrigDate", label: "Created Date" },
+                        { fieldName: "Shape.STLength()", label: "Length (ft)", format: { digitSeparator: true, places: 1 } }
+                    ]
+                }]
+            },
             renderer: { type: "simple", symbol: { type: "simple-line", color: [139, 69, 19, 0.8], width: 3 } }
         });
 
@@ -195,7 +217,18 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Drives",
             visible: false,
-            popupTemplate: { title: "Drive", content: "Click for drive information" },
+            popupTemplate: {
+                title: "Drive",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "FCODE", label: "Feature Code" },
+                        { fieldName: "Originator", label: "Created By" },
+                        { fieldName: "OrigDate", label: "Created Date" },
+                        { fieldName: "Shape.STLength()", label: "Length (ft)", format: { digitSeparator: true, places: 1 } }
+                    ]
+                }]
+            },
             renderer: { type: "simple", symbol: { type: "simple-line", color: [255, 192, 203, 0.7], width: 1 } }
         });
 
@@ -204,7 +237,18 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Median",
             visible: false,
-            popupTemplate: { title: "Median", content: "Click for median information" },
+            popupTemplate: {
+                title: "Roadway Median",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "FCODE", label: "Feature Code" },
+                        { fieldName: "Originator", label: "Created By" },
+                        { fieldName: "OrigDate", label: "Created Date" },
+                        { fieldName: "Shape.STArea()", label: "Area (sq ft)", format: { digitSeparator: true, places: 1 } }
+                    ]
+                }]
+            },
             renderer: { type: "simple", symbol: { type: "simple-fill", color: [144, 238, 144, 0.6], outline: { color: [0, 100, 0, 0.8], width: 1 } } }
         });
 
@@ -213,7 +257,18 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Roadway",
             visible: false,
-            popupTemplate: { title: "Roadway", content: "Click for roadway information" },
+            popupTemplate: {
+                title: "Roadway",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "FCODE", label: "Feature Code" },
+                        { fieldName: "Originator", label: "Created By" },
+                        { fieldName: "OrigDate", label: "Created Date" },
+                        { fieldName: "Shape.STLength()", label: "Length (ft)", format: { digitSeparator: true, places: 1 } }
+                    ]
+                }]
+            },
             renderer: { type: "simple", symbol: { type: "simple-line", color: [0, 150, 255, 0.8], width: 2 } }
         });
 
@@ -222,7 +277,18 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Parking",
             visible: false,
-            popupTemplate: { title: "Parking", content: "Click for parking information" },
+            popupTemplate: {
+                title: "Parking Area",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "FCODE", label: "Feature Code" },
+                        { fieldName: "Originator", label: "Created By" },
+                        { fieldName: "OrigDate", label: "Created Date" },
+                        { fieldName: "Shape.STArea()", label: "Area (sq ft)", format: { digitSeparator: true, places: 0 } }
+                    ]
+                }]
+            },
             renderer: { type: "simple", symbol: { type: "simple-fill", color: [255, 255, 0, 0.4], outline: { color: [255, 215, 0, 0.8], width: 1 } } }
         });
 
@@ -250,7 +316,20 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Athletic Field",
             visible: false,
-            popupTemplate: { title: "Athletic Field", content: "Click for athletic field information" },
+            popupTemplate: {
+                title: "Athletic Field - {Name}",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "Name", label: "Name" },
+                        { fieldName: "AthleticUse", label: "Athletic Use" },
+                        { fieldName: "FCODE", label: "Feature Code" },
+                        { fieldName: "Originator", label: "Created By" },
+                        { fieldName: "OrigDate", label: "Created Date" },
+                        { fieldName: "Shape.STArea()", label: "Area (sq ft)", format: { digitSeparator: true, places: 0 } }
+                    ]
+                }]
+            },
             renderer: { type: "simple", symbol: { type: "simple-fill", color: [34, 139, 34, 0.4], outline: { color: [0, 100, 0, 0.8], width: 2 } } }
         });
 
@@ -259,7 +338,19 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Athletic Track",
             visible: false,
-            popupTemplate: { title: "Athletic Track", content: "Click for track information" },
+            popupTemplate: {
+                title: "Athletic Track - {Name}",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "Name", label: "Name" },
+                        { fieldName: "FCODE", label: "Feature Code" },
+                        { fieldName: "Originator", label: "Created By" },
+                        { fieldName: "OrigDate", label: "Created Date" },
+                        { fieldName: "Shape.STLength()", label: "Length (ft)", format: { digitSeparator: true, places: 1 } }
+                    ]
+                }]
+            },
             renderer: { type: "simple", symbol: { type: "simple-line", color: [255, 20, 147, 0.8], width: 3 } }
         });
 
@@ -268,7 +359,19 @@ document.addEventListener("DOMContentLoaded", function() {
             outFields: ["*"],
             title: "Courts",
             visible: false,
-            popupTemplate: { title: "Courts", content: "Click for court information" },
+            popupTemplate: {
+                title: "Courts - {Name}",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "Name", label: "Name" },
+                        { fieldName: "FCODE", label: "Feature Code" },
+                        { fieldName: "Originator", label: "Created By" },
+                        { fieldName: "OrigDate", label: "Created Date" },
+                        { fieldName: "Shape.STArea()", label: "Area (sq ft)", format: { digitSeparator: true, places: 0 } }
+                    ]
+                }]
+            },
             renderer: { type: "simple", symbol: { type: "simple-fill", color: [255, 140, 0, 0.6], outline: { color: [255, 69, 0, 0.8], width: 2 } } }
         });
 
@@ -482,8 +585,18 @@ document.addEventListener("DOMContentLoaded", function() {
             title: "Historic Communities",
             visible: false,
             popupTemplate: {
-                title: "Historic Community",
-                content: "Click for historic community information"
+                title: "Historic Community - {Name}",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "Name", label: "Name" },
+                        { fieldName: "ALTNAME", label: "Alternative Name" },
+                        { fieldName: "TYPE", label: "Type" },
+                        { fieldName: "PARCELID", label: "Parcel ID" },
+                        { fieldName: "Location", label: "Location" },
+                        { fieldName: "Shape.STArea()", label: "Area (sq ft)", format: { digitSeparator: true, places: 0 } }
+                    ]
+                }]
             },
             renderer: {
                 type: "simple",
@@ -504,8 +617,19 @@ document.addEventListener("DOMContentLoaded", function() {
             title: "Historical Markers",
             visible: false,
             popupTemplate: {
-                title: "Historical Marker",
-                content: "Click for historical marker information"
+                title: "Historical Marker - {Name}",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "Name", label: "Name" },
+                        { fieldName: "Address", label: "Address" },
+                        { fieldName: "Text", label: "Description" },
+                        { fieldName: "Lat", label: "Latitude", format: { digitSeparator: false, places: 6 } },
+                        { fieldName: "Long", label: "Longitude", format: { digitSeparator: false, places: 6 } },
+                        { fieldName: "Image", label: "Image URL" },
+                        { fieldName: "Video", label: "Video URL" }
+                    ]
+                }]
             },
             renderer: {
                 type: "simple",
@@ -528,8 +652,18 @@ document.addEventListener("DOMContentLoaded", function() {
             title: "Cemetery",
             visible: false,
             popupTemplate: {
-                title: "Cemetery",
-                content: "Click for cemetery information"
+                title: "Cemetery - {Name}",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "Name", label: "Name" },
+                        { fieldName: "ALTNAME", label: "Alternative Name" },
+                        { fieldName: "TYPE", label: "Type" },
+                        { fieldName: "PARCELID", label: "Parcel ID" },
+                        { fieldName: "Location", label: "Location" },
+                        { fieldName: "Vol", label: "Volume" }
+                    ]
+                }]
             },
             renderer: {
                 type: "simple",
@@ -1662,6 +1796,86 @@ document.addEventListener("DOMContentLoaded", function() {
                 });
             }
             
+            // Update remaining basic popup templates with proper field information
+            function updateRemainingPopups() {
+                // Update remaining roadway layers
+                roadwayShoulderLayer.popupTemplate = {
+                    title: "Road Shoulder",
+                    content: [{
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "FCODE", label: "Feature Code" },
+                            { fieldName: "Originator", label: "Created By" },
+                            { fieldName: "OrigDate", label: "Created Date" },
+                            { fieldName: "Shape.STArea()", label: "Area (sq ft)", format: { digitSeparator: true, places: 0 } }
+                        ]
+                    }]
+                };
+
+                roadwayUnpavedLayer.popupTemplate = {
+                    title: "Unpaved Road",
+                    content: [{
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "FCODE", label: "Feature Code" },
+                            { fieldName: "Originator", label: "Created By" },
+                            { fieldName: "OrigDate", label: "Created Date" },
+                            { fieldName: "Shape.STLength()", label: "Length (ft)", format: { digitSeparator: true, places: 1 } }
+                        ]
+                    }]
+                };
+
+                // Update remaining recreation layers
+                recreationGolfLayer.popupTemplate = {
+                    title: "Golf Course - {Name}",
+                    content: [{
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "Name", label: "Name" },
+                            { fieldName: "FCODE", label: "Feature Code" },
+                            { fieldName: "Originator", label: "Created By" },
+                            { fieldName: "OrigDate", label: "Created Date" },
+                            { fieldName: "Shape.STArea()", label: "Area (sq ft)", format: { digitSeparator: true, places: 0 } }
+                        ]
+                    }]
+                };
+
+                recreationPublicLayer.popupTemplate = {
+                    title: "Public Recreation - {Name}",
+                    content: [{
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "Name", label: "Name" },
+                            { fieldName: "FCODE", label: "Feature Code" },
+                            { fieldName: "Originator", label: "Created By" },
+                            { fieldName: "OrigDate", label: "Created Date" },
+                            { fieldName: "Shape.STArea()", label: "Area (sq ft)", format: { digitSeparator: true, places: 0 } }
+                        ]
+                    }]
+                };
+
+                // Update landmark districts
+                culturalLandmarkDistrictsLayer.popupTemplate = {
+                    title: "Landmark District - {Name}",
+                    content: [{
+                        type: "fields",
+                        fieldInfos: [
+                            { fieldName: "Name", label: "Name" },
+                            { fieldName: "ALTNAME", label: "Alternative Name" },
+                            { fieldName: "TYPE", label: "Type" },
+                            { fieldName: "PARCELID", label: "Parcel ID" },
+                            { fieldName: "Location", label: "Location" },
+                            { fieldName: "Shape.STArea()", label: "Area (sq ft)", format: { digitSeparator: true, places: 0 } }
+                        ]
+                    }]
+                };
+
+                console.log("✅ Updated popup templates for all layers with proper field information");
+            }
+
+            // Update popup templates
+            updateRemainingPopups();
+
             // Initialize testing functionality after a delay to allow layers to load
             setTimeout(() => {
                 testAllLayers();
