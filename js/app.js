@@ -104,8 +104,239 @@ document.addEventListener("DOMContentLoaded", function() {
             visible: false
         });
         
+        // Create tower layer from Shelby County GIS Services
+        const towersLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Towers/MapServer/1",
+            outFields: ["*"],
+            title: "Transmission Towers",
+            visible: true, // Start visible
+            popupTemplate: {
+                title: "Transmission Tower",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "STRUCTTYPE", label: "Structure Type" },
+                        { fieldName: "HEIGHT_M", label: "Height (meters)" },
+                        { fieldName: "HEIGHT_FT", label: "Height (feet)" },
+                        { fieldName: "OWNER", label: "Owner" },
+                        { fieldName: "ADDRESS", label: "Address" }
+                    ]
+                }]
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-marker",
+                    size: 8,
+                    color: [255, 0, 0, 0.8], // Red color for towers
+                    outline: {
+                        color: [255, 255, 255, 0.8],
+                        width: 1
+                    }
+                }
+            }
+        });
+
+        // Create Billboards layer (from Signs service)
+        const billboardsLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Signs/MapServer/0",
+            outFields: ["*"],
+            title: "Billboards",
+            visible: false, // Start hidden
+            popupTemplate: {
+                title: "Billboard",
+                content: [{
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "Owner", label: "Owner" },
+                        { fieldName: "StrucHeight", label: "Structure Height" },
+                        { fieldName: "BaseElevation", label: "Base Elevation" },
+                        { fieldName: "TopElevation", label: "Top Elevation" },
+                        { fieldName: "Originator", label: "Originator" }
+                    ]
+                }]
+            },
+            renderer: {
+                type: "simple",
+                symbol: {
+                    type: "simple-marker",
+                    size: 8,
+                    color: [255, 165, 0, 0.8], // Orange color for billboards
+                    outline: {
+                        color: [255, 255, 255, 0.8],
+                        width: 1
+                    }
+                }
+            }
+        });
+
+        // Create Roadway sublayers
+        const roadwayAlleyLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Roadway/MapServer/0",
+            outFields: ["*"],
+            title: "Alley",
+            visible: false,
+            popupTemplate: { title: "Alley", content: "Click for alley information" },
+            renderer: { type: "simple", symbol: { type: "simple-line", color: [128, 128, 128, 0.7], width: 1 } }
+        });
+
+        const roadwayBridgesLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Roadway/MapServer/1",
+            outFields: ["*"],
+            title: "Bridges",
+            visible: false,
+            popupTemplate: { title: "Bridge", content: "Click for bridge information" },
+            renderer: { type: "simple", symbol: { type: "simple-line", color: [139, 69, 19, 0.8], width: 3 } }
+        });
+
+        const roadwayDrivesLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Roadway/MapServer/2",
+            outFields: ["*"],
+            title: "Drives",
+            visible: false,
+            popupTemplate: { title: "Drive", content: "Click for drive information" },
+            renderer: { type: "simple", symbol: { type: "simple-line", color: [255, 192, 203, 0.7], width: 1 } }
+        });
+
+        const roadwayMedianLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Roadway/MapServer/3",
+            outFields: ["*"],
+            title: "Median",
+            visible: false,
+            popupTemplate: { title: "Median", content: "Click for median information" },
+            renderer: { type: "simple", symbol: { type: "simple-fill", color: [144, 238, 144, 0.6], outline: { color: [0, 100, 0, 0.8], width: 1 } } }
+        });
+
+        const roadwayMainLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Roadway/MapServer/4",
+            outFields: ["*"],
+            title: "Roadway",
+            visible: false,
+            popupTemplate: { title: "Roadway", content: "Click for roadway information" },
+            renderer: { type: "simple", symbol: { type: "simple-line", color: [0, 150, 255, 0.8], width: 2 } }
+        });
+
+        const roadwayParkingLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Roadway/MapServer/5",
+            outFields: ["*"],
+            title: "Parking",
+            visible: false,
+            popupTemplate: { title: "Parking", content: "Click for parking information" },
+            renderer: { type: "simple", symbol: { type: "simple-fill", color: [255, 255, 0, 0.4], outline: { color: [255, 215, 0, 0.8], width: 1 } } }
+        });
+
+        const roadwayShoulderLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Roadway/MapServer/6",
+            outFields: ["*"],
+            title: "Shoulder",
+            visible: false,
+            popupTemplate: { title: "Shoulder", content: "Click for shoulder information" },
+            renderer: { type: "simple", symbol: { type: "simple-fill", color: [210, 180, 140, 0.5], outline: { color: [139, 117, 0, 0.8], width: 1 } } }
+        });
+
+        const roadwayUnpavedLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Roadway/MapServer/7",
+            outFields: ["*"],
+            title: "Unpaved Road",
+            visible: false,
+            popupTemplate: { title: "Unpaved Road", content: "Click for unpaved road information" },
+            renderer: { type: "simple", symbol: { type: "simple-line", color: [160, 82, 45, 0.7], width: 2, style: "dash" } }
+        });
+
+        // Create Recreation sublayers
+        const recreationAthleticFieldLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Recreation/MapServer/0",
+            outFields: ["*"],
+            title: "Athletic Field",
+            visible: false,
+            popupTemplate: { title: "Athletic Field", content: "Click for athletic field information" },
+            renderer: { type: "simple", symbol: { type: "simple-fill", color: [34, 139, 34, 0.4], outline: { color: [0, 100, 0, 0.8], width: 2 } } }
+        });
+
+        const recreationTrackLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Recreation/MapServer/1",
+            outFields: ["*"],
+            title: "Athletic Track",
+            visible: false,
+            popupTemplate: { title: "Athletic Track", content: "Click for track information" },
+            renderer: { type: "simple", symbol: { type: "simple-line", color: [255, 20, 147, 0.8], width: 3 } }
+        });
+
+        const recreationCourtsLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Recreation/MapServer/2",
+            outFields: ["*"],
+            title: "Courts",
+            visible: false,
+            popupTemplate: { title: "Courts", content: "Click for court information" },
+            renderer: { type: "simple", symbol: { type: "simple-fill", color: [255, 140, 0, 0.6], outline: { color: [255, 69, 0, 0.8], width: 2 } } }
+        });
+
+        const recreationGolfLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Recreation/MapServer/3",
+            outFields: ["*"],
+            title: "Golf Course",
+            visible: false,
+            popupTemplate: { title: "Golf Course", content: "Click for golf course information" },
+            renderer: { type: "simple", symbol: { type: "simple-fill", color: [50, 205, 50, 0.4], outline: { color: [34, 139, 34, 0.8], width: 2 } } }
+        });
+
+        const recreationPublicLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Recreation/MapServer/4",
+            outFields: ["*"],
+            title: "Public Recreation",
+            visible: false,
+            popupTemplate: { title: "Public Recreation", content: "Click for public recreation information" },
+            renderer: { type: "simple", symbol: { type: "simple-fill", color: [0, 255, 0, 0.3], outline: { color: [0, 150, 0, 0.8], width: 2 } } }
+        });
+
+        // Create Flood Zone sublayers
+        const floodElevationLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Flood_Zones/MapServer/0",
+            outFields: ["*"],
+            title: "Base Flood Elevation",
+            visible: false,
+            popupTemplate: { title: "Base Flood Elevation", content: "Click for base flood elevation information" },
+            renderer: { type: "simple", symbol: { type: "simple-line", color: [0, 0, 139, 0.8], width: 2 } }
+        });
+
+        const floodZonesLayer = new FeatureLayer({
+            url: "https://gis.shelbycountytn.gov/public/rest/services/BaseMap/Flood_Zones/MapServer/1",
+            outFields: ["*"],
+            title: "Flood Zones",
+            visible: false,
+            popupTemplate: { title: "Flood Zone", content: "Click for flood zone information" },
+            renderer: { type: "simple", symbol: { type: "simple-fill", color: [0, 0, 255, 0.2], outline: { color: [0, 0, 200, 0.8], width: 1 } } }
+        });
+        
         // Add the parcel layer to the map
         map.add(parcelLayer);
+
+        // Add the towers layer to the map
+        map.add(towersLayer);
+
+        // Add all the new layers to the map
+        map.add(billboardsLayer);
+        
+        // Add roadway sublayers
+        map.add(roadwayAlleyLayer);
+        map.add(roadwayBridgesLayer);
+        map.add(roadwayDrivesLayer);
+        map.add(roadwayMedianLayer);
+        map.add(roadwayMainLayer);
+        map.add(roadwayParkingLayer);
+        map.add(roadwayShoulderLayer);
+        map.add(roadwayUnpavedLayer);
+        
+        // Add recreation sublayers
+        map.add(recreationAthleticFieldLayer);
+        map.add(recreationTrackLayer);
+        map.add(recreationCourtsLayer);
+        map.add(recreationGolfLayer);
+        map.add(recreationPublicLayer);
+        
+        // Add flood zone sublayers
+        map.add(floodElevationLayer);
+        map.add(floodZonesLayer);
 
         // Layer for highlighting selected parcels
         highlightGraphicsLayer = new GraphicsLayer(); // Initialize here
@@ -146,6 +377,244 @@ document.addEventListener("DOMContentLoaded", function() {
             expandTooltip: "Change Basemap"
         });
         view.ui.add(bgExpand, "top-right");
+
+        // Create Layer Control Panel
+        const layerControlDiv = document.createElement("div");
+        layerControlDiv.className = "esri-widget layer-control-panel";
+        layerControlDiv.innerHTML = `
+            <div class="layer-control-header">
+                <h3>Map Layers</h3>
+            </div>
+            <div class="layer-control-content">
+                <div class="layer-item">
+                    <label class="layer-checkbox-container">
+                        <input type="checkbox" id="parcels-layer-toggle" checked>
+                        <span class="checkmark"></span>
+                        <span class="layer-label">Property Parcels</span>
+                    </label>
+                </div>
+                <div class="layer-item">
+                    <label class="layer-checkbox-container">
+                        <input type="checkbox" id="towers-layer-toggle" checked>
+                        <span class="checkmark"></span>
+                        <span class="layer-label">Transmission Towers</span>
+                    </label>
+                </div>
+                <div class="layer-item">
+                    <label class="layer-checkbox-container">
+                        <input type="checkbox" id="billboards-layer-toggle">
+                        <span class="checkmark"></span>
+                        <span class="layer-label">Billboards</span>
+                    </label>
+                </div>
+                
+                <div class="layer-group">
+                    <div class="layer-group-header">Roadway Layers</div>
+                    <div class="layer-sublayers">
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="roadway-alley-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Alley</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="roadway-bridges-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Bridges</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="roadway-drives-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Drives</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="roadway-median-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Median</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="roadway-main-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Roadway</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="roadway-parking-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Parking</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="roadway-shoulder-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Shoulder</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="roadway-unpaved-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Unpaved Road</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="layer-group">
+                    <div class="layer-group-header">Recreation Layers</div>
+                    <div class="layer-sublayers">
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="recreation-athletic-field-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Athletic Field</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="recreation-track-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Athletic Track</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="recreation-courts-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Courts</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="recreation-golf-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Golf Course</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="recreation-public-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Public Recreation</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="layer-group">
+                    <div class="layer-group-header">Flood Zone Layers</div>
+                    <div class="layer-sublayers">
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="flood-elevation-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Base Flood Elevation</span>
+                            </label>
+                        </div>
+                        <div class="layer-item sublayer">
+                            <label class="layer-checkbox-container">
+                                <input type="checkbox" id="flood-zones-toggle">
+                                <span class="checkmark"></span>
+                                <span class="layer-label">Flood Zones</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Create an expand widget for layer control
+        const layerExpand = new Expand({
+            view: view,
+            content: layerControlDiv,
+            expandIconClass: "esri-icon-layers",
+            expandTooltip: "Toggle Map Layers"
+        });
+        view.ui.add(layerExpand, "top-right");
+
+        // Setup layer control event listeners after view is ready
+        view.when(() => {
+            // Layer toggle event listeners for expandable widget
+            const layerToggles = [
+                // Base layers
+                { toggle: "parcels-layer-toggle", layer: parcelLayer, sidebar: "sidebar-parcels-layer-toggle" },
+                { toggle: "towers-layer-toggle", layer: towersLayer, sidebar: "sidebar-towers-layer-toggle" },
+                { toggle: "billboards-layer-toggle", layer: billboardsLayer, sidebar: "sidebar-billboards-layer-toggle" },
+                
+                // Roadway sublayers
+                { toggle: "roadway-alley-toggle", layer: roadwayAlleyLayer, sidebar: "sidebar-roadway-alley-toggle" },
+                { toggle: "roadway-bridges-toggle", layer: roadwayBridgesLayer, sidebar: "sidebar-roadway-bridges-toggle" },
+                { toggle: "roadway-drives-toggle", layer: roadwayDrivesLayer, sidebar: "sidebar-roadway-drives-toggle" },
+                { toggle: "roadway-median-toggle", layer: roadwayMedianLayer, sidebar: "sidebar-roadway-median-toggle" },
+                { toggle: "roadway-main-toggle", layer: roadwayMainLayer, sidebar: "sidebar-roadway-main-toggle" },
+                { toggle: "roadway-parking-toggle", layer: roadwayParkingLayer, sidebar: "sidebar-roadway-parking-toggle" },
+                { toggle: "roadway-shoulder-toggle", layer: roadwayShoulderLayer, sidebar: "sidebar-roadway-shoulder-toggle" },
+                { toggle: "roadway-unpaved-toggle", layer: roadwayUnpavedLayer, sidebar: "sidebar-roadway-unpaved-toggle" },
+                
+                // Recreation sublayers
+                { toggle: "recreation-athletic-field-toggle", layer: recreationAthleticFieldLayer, sidebar: "sidebar-recreation-athletic-field-toggle" },
+                { toggle: "recreation-track-toggle", layer: recreationTrackLayer, sidebar: "sidebar-recreation-track-toggle" },
+                { toggle: "recreation-courts-toggle", layer: recreationCourtsLayer, sidebar: "sidebar-recreation-courts-toggle" },
+                { toggle: "recreation-golf-toggle", layer: recreationGolfLayer, sidebar: "sidebar-recreation-golf-toggle" },
+                { toggle: "recreation-public-toggle", layer: recreationPublicLayer, sidebar: "sidebar-recreation-public-toggle" },
+                
+                // Flood zone sublayers
+                { toggle: "flood-elevation-toggle", layer: floodElevationLayer, sidebar: "sidebar-flood-elevation-toggle" },
+                { toggle: "flood-zones-toggle", layer: floodZonesLayer, sidebar: "sidebar-flood-zones-toggle" }
+            ];
+
+            // Setup expandable widget toggles
+            layerToggles.forEach(config => {
+                const toggle = document.getElementById(config.toggle);
+                if (toggle) {
+                    toggle.addEventListener("change", function(e) {
+                        config.layer.visible = e.target.checked;
+                        // Sync with sidebar toggle
+                        const sidebarToggle = document.getElementById(config.sidebar);
+                        if (sidebarToggle) sidebarToggle.checked = e.target.checked;
+                    });
+                }
+            });
+
+            // Setup sidebar toggles
+            layerToggles.forEach(config => {
+                const sidebarToggle = document.getElementById(config.sidebar);
+                if (sidebarToggle) {
+                    sidebarToggle.addEventListener("change", function(e) {
+                        config.layer.visible = e.target.checked;
+                        // Sync with expandable widget toggle
+                        const expandToggle = document.getElementById(config.toggle);
+                        if (expandToggle) expandToggle.checked = e.target.checked;
+                    });
+                }
+            });
+
+            // Layer section toggle functionality
+            const toggleLayerSectionButton = document.getElementById("toggle-layer-section-button");
+            const layerControlContent = document.getElementById("layer-control-content");
+            
+            if (toggleLayerSectionButton && layerControlContent) {
+                toggleLayerSectionButton.addEventListener("click", function() {
+                    if (layerControlContent.style.display === "none") {
+                        layerControlContent.style.display = "block";
+                        toggleLayerSectionButton.textContent = "Hide";
+                    } else {
+                        layerControlContent.style.display = "none";
+                        toggleLayerSectionButton.textContent = "Show";
+                    }
+                });
+            }
+        });
 
         // Create fullscreen toggle button for the map
         const fullscreenToggleDiv = document.createElement("div");

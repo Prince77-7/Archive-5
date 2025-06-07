@@ -1592,3 +1592,509 @@ body.mobile-fullscreen-mode header {
         box-shadow: 0 0 0 2px var(--accent-muted);
     }
 }
+
+/* Layer Control Panel Styles */
+.layer-control-panel {
+    min-width: 200px;
+    padding: 15px;
+    background-color: var(--bg-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+}
+
+.layer-control-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.layer-control-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.layer-control-header h3::before {
+    content: "🗺️";
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+.layer-control-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.layer-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    transition: all var(--transition-fast);
+    border-radius: var(--border-radius-sm);
+}
+
+.layer-item:hover {
+    background-color: var(--bg-secondary);
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.layer-checkbox-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    width: 100%;
+    padding: 5px;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.layer-checkbox-container:hover {
+    background-color: rgba(77, 171, 247, 0.1);
+}
+
+/* Hide the default checkbox */
+.layer-checkbox-container input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Custom checkbox */
+.checkmark {
+    height: 18px;
+    width: 18px;
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 3px;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-medium);
+    flex-shrink: 0;
+}
+
+/* When checkbox is checked */
+.layer-checkbox-container input:checked ~ .checkmark {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px rgba(77, 171, 247, 0.3);
+}
+
+/* Checkmark symbol */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Show checkmark when checked */
+.layer-checkbox-container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.layer-label {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color var(--transition-fast);
+    flex: 1;
+}
+
+.layer-checkbox-container:hover .layer-label {
+    color: var(--accent-color);
+}
+
+/* Active state animation */
+.layer-checkbox-container input:checked ~ .checkmark {
+    animation: checkboxPulse 0.3s ease-out;
+}
+
+@keyframes checkboxPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Mobile responsiveness for layer control */
+@media (max-width: 768px) {
+    .layer-control-panel {
+        min-width: 180px;
+        padding: 12px;
+    }
+    
+    .layer-control-header h3 {
+        font-size: 0.9rem;
+    }
+    
+    .layer-label {
+        font-size: 0.85rem;
+    }
+    
+    .checkmark {
+        height: 16px;
+        width: 16px;
+        margin-right: 10px;
+    }
+    
+    .checkmark:after {
+        left: 4px;
+        top: 1px;
+        width: 3px;
+        height: 7px;
+    }
+}
+
+/* Sidebar Layer Control Styles */
+#layer-control-section {
+    animation: fadeIn 0.3s ease-out;
+}
+
+#layer-control-section h2 {
+    display: flex;
+    align-items: center;
+}
+
+#layer-control-section h2::before {
+    content: "🗺️";
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+.sidebar-layer-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all var(--transition-fast);
+    border-radius: var(--border-radius-sm);
+}
+
+.sidebar-layer-item:last-child {
+    border-bottom: none;
+}
+
+.sidebar-layer-item:hover {
+    background-color: rgba(77, 171, 247, 0.1);
+    padding-left: 10px;
+    padding-right: 10px;
+    transform: translateX(2px);
+}
+
+.sidebar-layer-checkbox-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    width: 100%;
+    padding: 5px;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.sidebar-layer-checkbox-container:hover {
+    background-color: rgba(77, 171, 247, 0.05);
+}
+
+/* Hide the default checkbox for sidebar */
+.sidebar-layer-checkbox-container input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Custom checkbox for sidebar */
+.sidebar-checkmark {
+    height: 20px;
+    width: 20px;
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-medium);
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* When checkbox is checked for sidebar */
+.sidebar-layer-checkbox-container input:checked ~ .sidebar-checkmark {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(77, 171, 247, 0.4);
+    transform: scale(1.05);
+}
+
+/* Checkmark symbol for sidebar */
+.sidebar-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Show checkmark when checked for sidebar */
+.sidebar-layer-checkbox-container input:checked ~ .sidebar-checkmark:after {
+    display: block;
+}
+
+.sidebar-layer-label {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: color var(--transition-fast);
+    flex: 1;
+}
+
+.sidebar-layer-checkbox-container:hover .sidebar-layer-label {
+    color: var(--accent-color);
+}
+
+/* Active state animation for sidebar */
+.sidebar-layer-checkbox-container input:checked ~ .sidebar-checkmark {
+    animation: sidebarCheckboxPulse 0.4s ease-out;
+}
+
+@keyframes sidebarCheckboxPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1.05);
+    }
+}
+
+.layer-placeholder {
+    padding: 15px 10px;
+    text-align: center;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius-md);
+    margin-top: 10px;
+    background-color: rgba(255, 255, 255, 0.02);
+    transition: all var(--transition-medium);
+}
+
+.layer-placeholder:hover {
+    border-color: rgba(77, 171, 247, 0.3);
+    background-color: rgba(77, 171, 247, 0.05);
+}
+
+/* Mobile responsiveness for sidebar layer control */
+@media (max-width: 768px) {
+    .sidebar-layer-item {
+        padding: 10px 0;
+    }
+    
+    .sidebar-layer-label {
+        font-size: 0.9rem;
+    }
+    
+    .sidebar-checkmark {
+        height: 18px;
+        width: 18px;
+        margin-right: 12px;
+    }
+    
+    .sidebar-checkmark:after {
+        left: 5px;
+        top: 1px;
+        width: 4px;
+        height: 8px;
+    }
+    
+    .layer-placeholder {
+        padding: 12px 8px;
+        margin-top: 8px;
+    }
+}
+
+/* Layer Group Styles for Expandable Widget */
+.layer-group {
+    margin: 15px 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius-md);
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.layer-group-header {
+    background-color: rgba(77, 171, 247, 0.1);
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--accent-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.layer-sublayers {
+    padding: 5px 0;
+}
+
+.layer-item.sublayer {
+    padding: 6px 0;
+    margin-left: 10px;
+    border-left: 2px solid rgba(77, 171, 247, 0.3);
+    padding-left: 10px;
+}
+
+.layer-item.sublayer:hover {
+    background-color: rgba(77, 171, 247, 0.08);
+    border-left-color: var(--accent-color);
+}
+
+.layer-item.sublayer .layer-label {
+    font-size: 0.85rem;
+}
+
+/* Sidebar Layer Group Styles */
+.sidebar-layer-group {
+    margin: 15px 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius-md);
+    background-color: rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+}
+
+.sidebar-layer-group-header {
+    background-color: rgba(77, 171, 247, 0.1);
+    padding: 10px 15px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-layer-group-header::before {
+    content: "📁";
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+.sidebar-layer-sublayers {
+    padding: 5px 0;
+}
+
+.sidebar-layer-item.sublayer {
+    padding: 8px 0;
+    margin-left: 15px;
+    border-left: 3px solid rgba(77, 171, 247, 0.3);
+    padding-left: 15px;
+    position: relative;
+}
+
+.sidebar-layer-item.sublayer::before {
+    content: "";
+    position: absolute;
+    left: -3px;
+    top: 50%;
+    width: 8px;
+    height: 1px;
+    background-color: rgba(77, 171, 247, 0.5);
+    transform: translateY(-50%);
+}
+
+.sidebar-layer-item.sublayer:hover {
+    background-color: rgba(77, 171, 247, 0.08);
+    border-left-color: var(--accent-color);
+    transform: translateX(3px);
+}
+
+.sidebar-layer-item.sublayer:hover::before {
+    background-color: var(--accent-color);
+    width: 10px;
+}
+
+.sidebar-layer-item.sublayer .sidebar-layer-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.sidebar-layer-item.sublayer .sidebar-checkmark {
+    height: 18px;
+    width: 18px;
+    margin-right: 12px;
+}
+
+/* Animation for group expand/collapse */
+.layer-sublayers,
+.sidebar-layer-sublayers {
+    transition: all var(--transition-medium) ease-in-out;
+}
+
+/* Hover effects for group headers */
+.layer-group-header:hover,
+.sidebar-layer-group-header:hover {
+    background-color: rgba(77, 171, 247, 0.15);
+    cursor: default;
+}
+
+/* Responsive adjustments for grouped layers */
+@media (max-width: 768px) {
+    .layer-group,
+    .sidebar-layer-group {
+        margin: 10px 0;
+    }
+    
+    .layer-group-header,
+    .sidebar-layer-group-header {
+        font-size: 0.8rem;
+        padding: 8px 10px;
+    }
+    
+    .layer-item.sublayer,
+    .sidebar-layer-item.sublayer {
+        margin-left: 8px;
+        padding-left: 8px;
+    }
+    
+    .sidebar-layer-item.sublayer .sidebar-layer-label {
+        font-size: 0.85rem;
+    }
+    
+    .layer-item.sublayer .layer-label {
+        font-size: 0.8rem;
+    }
+}

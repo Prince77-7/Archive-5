@@ -89,6 +89,161 @@
                     <div id="property-list-container" style="display: none;"></div>
                 </div>
 
+                <!-- Layer Control Section -->
+                <div id="layer-control-section" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #444;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2>Map Layers</h2>
+                        <button id="toggle-layer-section-button" class="action-button" title="Toggle Layer Section" style="padding: 2px 6px; font-size: 0.8em;">Hide</button>
+                    </div>
+                    <div id="layer-control-content" class="info-group">
+                        <div class="sidebar-layer-item">
+                            <label class="sidebar-layer-checkbox-container">
+                                <input type="checkbox" id="sidebar-parcels-layer-toggle" checked>
+                                <span class="sidebar-checkmark"></span>
+                                <span class="sidebar-layer-label">Property Parcels</span>
+                            </label>
+                        </div>
+                        <div class="sidebar-layer-item">
+                            <label class="sidebar-layer-checkbox-container">
+                                <input type="checkbox" id="sidebar-towers-layer-toggle" checked>
+                                <span class="sidebar-checkmark"></span>
+                                <span class="sidebar-layer-label">Transmission Towers</span>
+                            </label>
+                        </div>
+                        <div class="sidebar-layer-item">
+                            <label class="sidebar-layer-checkbox-container">
+                                <input type="checkbox" id="sidebar-billboards-layer-toggle">
+                                <span class="sidebar-checkmark"></span>
+                                <span class="sidebar-layer-label">Billboards</span>
+                            </label>
+                        </div>
+                        
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-layer-group-header">Roadway Layers</div>
+                            <div class="sidebar-layer-sublayers">
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-roadway-alley-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Alley</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-roadway-bridges-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Bridges</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-roadway-drives-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Drives</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-roadway-median-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Median</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-roadway-main-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Roadway</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-roadway-parking-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Parking</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-roadway-shoulder-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Shoulder</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-roadway-unpaved-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Unpaved Road</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-layer-group-header">Recreation Layers</div>
+                            <div class="sidebar-layer-sublayers">
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-recreation-athletic-field-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Athletic Field</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-recreation-track-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Athletic Track</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-recreation-courts-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Courts</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-recreation-golf-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Golf Course</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-recreation-public-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Public Recreation</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-layer-group-header">Flood Zone Layers</div>
+                            <div class="sidebar-layer-sublayers">
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-flood-elevation-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Base Flood Elevation</span>
+                                    </label>
+                                </div>
+                                <div class="sidebar-layer-item sublayer">
+                                    <label class="sidebar-layer-checkbox-container">
+                                        <input type="checkbox" id="sidebar-flood-zones-toggle">
+                                        <span class="sidebar-checkmark"></span>
+                                        <span class="sidebar-layer-label">Flood Zones</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Layer Control Section -->
+
                 <!-- Container for Favorites List -->
                 <div id="favorites-container" class="hidden" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #444;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
